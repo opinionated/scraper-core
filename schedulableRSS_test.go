@@ -3,7 +3,7 @@ package fetcher_test
 import (
 	"fmt"
 	"github.com/golang/mock/gomock"
-	"github.com/opinionated/scheduler"
+	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/fetcher"
 	mock_rss "github.com/opinionated/scraper-core/mock_rss"
 	"io/ioutil"

@@ -2,7 +2,7 @@ package fetcher
 
 import (
 	"fmt"
-	"github.com/opinionated/scheduler"
+	"github.com/opinionated/scheduler/scheduler"
 	"io/ioutil"
 	"math"
 	"net/http"

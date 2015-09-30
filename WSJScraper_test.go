@@ -2,7 +2,7 @@ package fetcher_test
 
 import (
 	"bufio"
-	"github.com/opinionated/scraper-core"
+	"github.com/opinionated/scraper-core/fetcher"
 	"golang.org/x/net/html"
 	"os"
 	"testing"
