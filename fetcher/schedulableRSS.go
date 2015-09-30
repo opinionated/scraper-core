@@ -2,10 +2,10 @@ package fetcher
 
 import (
 	"fmt"
+	"github.com/opinionated/scheduler"
 	"io/ioutil"
 	"math"
 	"net/http"
-	"scraper/scheduler"
 	"time"
 )
 

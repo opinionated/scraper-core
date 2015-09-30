@@ -2,8 +2,8 @@ package fetcher
 
 import (
 	"fmt"
+	"github.com/opinionated/scheduler"
 	"math"
-	"scraper/scheduler"
 	"time"
 )
 
