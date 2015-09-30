@@ -54,6 +54,7 @@ func SignalDone(s *scheduler.Scheduler, c chan bool) {
 }
 
 func TestSchedulableRSSMock(t *testing.T) {
+	t.Skip("don't run full test")
 	// simulates actual run behavior using mocks
 	// used gomock for the mocking
 	// generated mock with command:
