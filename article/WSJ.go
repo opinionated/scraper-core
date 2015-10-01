@@ -1,4 +1,4 @@
-package fetcher
+package article
 
 import (
 	"encoding/xml"
