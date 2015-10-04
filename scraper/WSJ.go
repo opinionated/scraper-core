@@ -1,4 +1,4 @@
-package article
+package scraper
 
 import (
 	"encoding/xml"

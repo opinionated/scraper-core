@@ -3,13 +3,14 @@ package fetcher
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/opinionated/scraper-core/scraper"
 	"golang.org/x/net/html"
 	"net/http"
 )
 
 // Parse the wsj opinion rss feed into useable links.
 // Returns an array of articles and an error
-func GetStories(rss RSS, body []byte) error {
+func GetStories(rss scraper.RSS, body []byte) error {
 	err := xml.Unmarshal(body, rss)
 	if err != nil {
 		fmt.Printf("err:", err)
@@ -25,7 +26,7 @@ func GetStories(rss RSS, body []byte) error {
 }
 
 // Request a page containing the article linked to
-func DoGetArticle(article Article) error {
+func DoGetArticle(article scraper.Article) error {
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", article.GetLink(), nil)
@@ -38,7 +39,7 @@ func DoGetArticle(article Article) error {
 
 	defer resp.Body.Close()
 	parser := html.NewTokenizer(resp.Body)
-	tmp := article.(*WSJArticle)
+	tmp := article.(*scraper.WSJArticle)
 	tmp.DoParse(parser)
 	return err
 }

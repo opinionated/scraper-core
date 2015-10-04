@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/opinionated/scraper-core/fetcher"
+	"github.com/opinionated/scraper-core/scraper"
 	"io/ioutil"
 	"net/http"
 )
@@ -23,7 +24,7 @@ func main() {
 		return
 	}
 	// note need to use ptr here because things will be changing
-	rss := &fetcher.WSJRSS{}
+	rss := &scraper.WSJRSS{}
 	err = fetcher.GetStories(rss, body)
 	if err != nil {
 		fmt.Println("oh nose, error working with body")
