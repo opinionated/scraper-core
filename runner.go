@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	fmt.Println("test git update")
 	// do a simple http fetch:
 	resp, err := http.Get("http://www.wsj.com/xml/rss/3_7041.xml")
 	if err != nil {
