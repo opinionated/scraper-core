@@ -6,6 +6,7 @@ import (
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/fetcher"
 	mock_rss "github.com/opinionated/scraper-core/mock_rss"
+	"github.com/opinionated/scraper-core/scraper"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -17,13 +18,13 @@ func TestSchedulableRSS(t *testing.T) {
 	s := scheduler.MakeScheduler(5, 3)
 	s.Start()
 
-	rss := fetcher.CreateSchedulableRSS(&fetcher.WSJRSS{}, 0)
+	rss := fetcher.CreateSchedulableRSS(&scraper.WSJRSS{}, 0)
 	s.AddSchedulable(rss)
 	time.Sleep(time.Duration(6) * time.Second)
 	s.Stop()
 }
 
-func RunRSS(rss fetcher.RSS) {
+func RunRSS(rss scraper.RSS) {
 	resp, err := http.Get(rss.GetLink())
 	fmt.Println("link is:", rss.GetLink())
 	if err != nil {
@@ -54,6 +55,7 @@ func SignalDone(s *scheduler.Scheduler, c chan bool) {
 }
 
 func TestSchedulableRSSMock(t *testing.T) {
+	t.Skip("don't run full test")
 	// simulates actual run behavior using mocks
 	// used gomock for the mocking
 	// generated mock with command:
@@ -64,7 +66,7 @@ func TestSchedulableRSSMock(t *testing.T) {
 
 	// build an actual RSS and push its signals onto the mock
 	// use the mock to control what stories get run until code is written to manage it
-	wsj := &fetcher.WSJRSS{}
+	wsj := &scraper.WSJRSS{}
 	RunRSS(wsj)
 
 	// build mock RSS, limit how many times it can run

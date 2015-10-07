@@ -5,7 +5,7 @@ package mock_fetcher
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	fetcher "github.com/opinionated/scraper-core/fetcher"
+	fetcher "github.com/opinionated/scraper-core/scraper"
 )
 
 // Mock of RSS interface

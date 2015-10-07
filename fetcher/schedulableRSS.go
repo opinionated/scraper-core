@@ -3,6 +3,7 @@ package fetcher
 import (
 	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
+	"github.com/opinionated/scraper-core/scraper"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -11,7 +12,7 @@ import (
 
 // make an RSS schedulable
 type SchedulableRSS struct {
-	RSSFeed RSS
+	RSSFeed scraper.RSS
 	delay   int
 	start   time.Time
 }
@@ -67,7 +68,7 @@ func (rss *SchedulableRSS) SetTimeRemaining(remaining int) {
 }
 
 // factory to make schedulable rss
-func CreateSchedulableRSS(rss RSS, delay int) *SchedulableRSS {
+func CreateSchedulableRSS(rss scraper.RSS, delay int) *SchedulableRSS {
 	return &SchedulableRSS{rss, delay, time.Now()}
 }
 

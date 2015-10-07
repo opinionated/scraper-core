@@ -1,4 +1,4 @@
-package fetcher
+package scraper
 
 import (
 	"encoding/xml"

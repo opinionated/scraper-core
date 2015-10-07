@@ -1,8 +1,9 @@
-package fetcher_test
+package scraper_test
 
 import (
 	"bufio"
 	"github.com/opinionated/scraper-core/fetcher"
+	"github.com/opinionated/scraper-core/scraper"
 	"golang.org/x/net/html"
 	"os"
 	"testing"
@@ -20,7 +21,7 @@ func TestTricky(t *testing.T) {
 	fileScanner := bufio.NewReader(file)
 	parser := html.NewTokenizer(fileScanner)
 
-	article := &fetcher.WSJArticle{}
+	article := &scraper.WSJArticle{}
 	err = article.DoParse(parser)
 	if err != nil {
 		t.Errorf("error parsing:", err)

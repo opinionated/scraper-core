@@ -3,13 +3,14 @@ package fetcher
 import (
 	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
+	"github.com/opinionated/scraper-core/scraper" // this name creates some ambiguity, get a better name...
 	"math"
 	"time"
 )
 
 // make an Article schedulable
 type SchedulableArticle struct {
-	Article Article
+	Article scraper.Article
 	delay   int
 	start   time.Time
 }
@@ -42,7 +43,7 @@ func (article *SchedulableArticle) SetTimeRemaining(remaining int) {
 }
 
 // factory to make schedulable article
-func CreateSchedulableArticle(article Article, delay int) *SchedulableArticle {
+func CreateSchedulableArticle(article scraper.Article, delay int) *SchedulableArticle {
 	return &SchedulableArticle{article, delay, time.Now()}
 }
 
