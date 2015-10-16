@@ -46,6 +46,7 @@ func (rss *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 	go scheduler.AddSchedulable(toSchedule)
 	if rss.IsLoopable() && scheduler.IsRunning() {
 		rss.start = time.Now()
+		rss.RSSFeed.GetChannel().ClearArticles()
 		go scheduler.AddSchedulable(rss)
 	}
 }

@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-// TODO: make a comapre function
+// TODO: make a comapare function
 func TestTricky(t *testing.T) {
 	file, err := os.Open("testData/WSJCarsonHtml.txt")
 	defer file.Close()

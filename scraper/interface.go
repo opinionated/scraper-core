@@ -36,4 +36,5 @@ type RSS interface {
 type RSSChannel interface {
 	GetArticle(int) Article
 	GetNumArticles() int
+	ClearArticles() bool
 }

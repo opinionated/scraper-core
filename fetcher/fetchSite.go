@@ -8,8 +8,8 @@ import (
 	"net/http"
 )
 
-// Parse the wsj opinion rss feed into useable links.
-// Returns an array of articles and an error
+// Parse the wsj opinion rss feed into articles.
+// Outputs articles and an error
 func GetStories(rss scraper.RSS, body []byte) error {
 	err := xml.Unmarshal(body, rss)
 	if err != nil {
@@ -18,8 +18,10 @@ func GetStories(rss scraper.RSS, body []byte) error {
 	}
 
 	for i := 0; i < rss.GetChannel().GetNumArticles(); i++ {
-		article := rss.GetChannel().GetArticle(i)
-		fmt.Println("title:", article.GetTitle(), "\tdescr:", article.GetDescription())
+		//article := 
+		rss.GetChannel().GetArticle(i)
+		// fmt.Println("title:", article.GetTitle(), "\tdescr:", article.GetDescription())
+		fmt.Println("index:",i)
 	}
 
 	return nil
@@ -43,3 +45,4 @@ func DoGetArticle(article scraper.Article) error {
 	tmp.DoParse(parser)
 	return err
 }
+// ToDo, make some cookie profiles and make a function return a random cookie string

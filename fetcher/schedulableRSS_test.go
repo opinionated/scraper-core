@@ -14,7 +14,7 @@ import (
 )
 
 func TestSchedulableRSS(t *testing.T) {
-	t.Skip("skipping RSS test for now")
+	// t.Skip("skipping RSS test for now")
 	s := scheduler.MakeScheduler(5, 3)
 	s.Start()
 

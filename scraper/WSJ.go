@@ -188,6 +188,11 @@ func (channel *WSJRSSChannel) GetNumArticles() int {
 	return len(channel.Articles)
 }
 
+func (channel *WSJRSSChannel) ClearArticles() bool {
+	channel.Articles = nil
+	return true
+}
+
 type WSJRSS struct {
 	XMLName xml.Name      `xml:"rss"`
 	Channel WSJRSSChannel `xml:"channel"`
