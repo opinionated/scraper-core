@@ -18,7 +18,7 @@ func TestSchedulableRSS(t *testing.T) {
 	s := scheduler.MakeScheduler(5, 3)
 	s.Start()
 
-	rss := fetcher.CreateSchedulableRSS(&scraper.WSJRSS{}, 0)
+	rss := fetcher.CreateSchedulableRSS(&scraper.WSJRSS{},3)
 	s.AddSchedulable(rss)
 	time.Sleep(time.Duration(6) * time.Second)
 	s.Stop()
