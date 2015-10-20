@@ -2,16 +2,15 @@ package scraper_test
 
 import (
 	"bufio"
-	"github.com/opinionated/scraper-core/fetcher"
 	"github.com/opinionated/scraper-core/scraper"
 	"golang.org/x/net/html"
 	"os"
 	"testing"
 )
 
-// TODO: make a comapare function
-func TestTricky(t *testing.T) {
-	file, err := os.Open("testData/WSJCarsonHtml.txt")
+// TODO: make a compare function
+func TestWSJ1(t *testing.T) {
+	file, err := os.Open("testData/WSJCarsonHtml.txt") // TODO: Add test file
 	defer file.Close()
 	if err != nil {
 		t.Errorf("error opening file:", err)
