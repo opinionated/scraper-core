@@ -45,7 +45,10 @@ func DoGetArticle(article scraper.Article) error {
 		fmt.Println("oh nose, err with get article http request:", err)
 		return err
 	}
-
+	if (resp.Header["X-Article-Template"][0] != "full"){				//error checking 
+		fmt.Println("OH GOD OH GOD OH GOD, the template isn't full THEY KNOW\n", err)	//Should panic if this isn't at full
+		return err
+	}	
 	fmt.Println("---------------------------------RESPONSE\n")			//check to see if X-Article-Template is [full]
 	fmt.Println(resp.Header)
 	fmt.Println("---------------------------------RESPONSE\n")
