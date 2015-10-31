@@ -167,7 +167,6 @@ articleBodyStartLoop:
 		}
 
 	}
-	return nil
 }
 
 type WSJRSSChannel struct {

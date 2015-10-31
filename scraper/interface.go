@@ -10,12 +10,13 @@ import (
 
 /**
  * Types for scraping articles from a web source
- * Most news sites seem to have rss feeds for articles
  * RSS feeds contain channels which contain articles
- * Use these interfaces to add a new news source
+ *
+ * Also provides UpdateRSS(RSS) and ScrapeArticle(Article)
  */
-// Generic article type
-// Gets body from an article link
+
+// Article holds scaping data(link) and parsed data (body, title, description)
+// Gets body from an article link.
 type Article interface {
 	DoParse(*html.Tokenizer) error
 
@@ -27,24 +28,25 @@ type Article interface {
 	GetTitle() string
 }
 
-// Generic RSS feed
-// RSS feeds have channels
+// RSS contains a link and a channel.
+// Used when unmarshalling rss feeds.
 type RSS interface {
 	// TODO: add ptr and non-ptr access to these guys
 	GetLink() string
 	GetChannel() RSSChannel
 }
 
-// Provides access to an RSS's channel, which contains the articles
-// Can't return an array here because of how interfaces are set up
+// RSSChannel is basically an array of Articles.
+// Can't return an array here because of how interfaces are set up.
 type RSSChannel interface {
 	GetArticle(int) Article
 	GetNumArticles() int
 	ClearArticles() bool
 }
 
-// Fetches all articles currently in the RSS feed.
-// Clears old articles out of RSS feed before getting new ones
+// UpdateRSS finds articles currently in the RSS feed.
+// Clears old articles out of RSS feed before getting new ones.
+// rss should be passed as an *RSS
 func UpdateRSS(rss RSS) error {
 	// clear out old articles so we don't double add
 	rss.GetChannel().ClearArticles()
@@ -74,7 +76,8 @@ func UpdateRSS(rss RSS) error {
 	return nil
 }
 
-// Request a page containing the article linked to
+// ScrapeArticle fetches and parses the article.
+// article should be provided as a *Article.
 func ScrapeArticle(article Article) error {
 	client := &http.Client{}
 
