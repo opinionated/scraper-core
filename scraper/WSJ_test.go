@@ -13,7 +13,7 @@ func TestWSJ1(t *testing.T) {
 	file, err := os.Open("testData/WSJCarsonHtml.txt") // TODO: Add test file
 	defer file.Close()
 	if err != nil {
-		t.Errorf("error opening file:", err)
+		t.Errorf("error opening file: %s\n", err)
 		return
 	}
 
@@ -23,6 +23,6 @@ func TestWSJ1(t *testing.T) {
 	article := &scraper.WSJArticle{}
 	err = article.DoParse(parser)
 	if err != nil {
-		t.Errorf("error parsing:", err)
+		t.Errorf("error parsing: %s\n", err)
 	}
 }

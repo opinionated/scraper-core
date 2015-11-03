@@ -4,73 +4,82 @@ import (
 	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/scraper"
-	"io/ioutil"
 	"math"
-	"net/http"
 	"time"
 )
 
 // make an RSS schedulable
 type SchedulableRSS struct {
-	RSSFeed scraper.RSS
-	delay   int
-	start   time.Time
+	rss         scraper.RSS
+	delay       int
+	start       time.Time
+	oldArticles map[string]bool
 }
 
-func (rss *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
+func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 	fmt.Println("goint to run RSS")
-	resp, err := http.Get(rss.RSSFeed.GetLink())
-	if err != nil {
-		// TODO: error checking here
-		fmt.Println("error getting RSS:", err)
-		return
-	}
 
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("error reading body")
-		// TODO: error handling
-		return
-	}
-
-	err = GetStories(rss.RSSFeed, body)
+	err := scraper.UpdateRSS(task.rss)
 	if err != nil {
 		fmt.Println("error getting stories")
 		return
 	}
 
-	fmt.Println("OK")
-	// TODO: use config file to control the timing here
-	toSchedule := CreateSchedulableArticle(rss.RSSFeed.GetChannel().GetArticle(0), 1)
-	go scheduler.AddSchedulable(toSchedule)
-	if rss.IsLoopable() && scheduler.IsRunning() {
-		rss.start = time.Now()
-		rss.RSSFeed.GetChannel().ClearArticles()
-		go scheduler.AddSchedulable(rss)
+	// mark all articles as not in list
+	for key, _ := range task.oldArticles {
+		task.oldArticles[key] = false
+	}
+
+	// schedule any new articles
+	// an article is new if it wasn't in the last RSS ping
+	delay := 10 // TODO: create legitimate task delays
+	for i := 0; i < task.rss.GetChannel().GetNumArticles(); i++ {
+		article := task.rss.GetChannel().GetArticle(i)
+		if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
+			toSchedule := CreateSchedulableArticle(article, delay)
+			delay += 10
+			go scheduler.AddSchedulable(toSchedule)
+		}
+
+		// add or update what we found
+		task.oldArticles[article.GetLink()] = true
+	}
+
+	// remove any articles not in the set
+	for key, inList := range task.oldArticles {
+		if !inList {
+			delete(task.oldArticles, key)
+		}
+	}
+
+	// reschedule this task
+	if task.IsLoopable() && scheduler.IsRunning() {
+		task.start = time.Now()
+		task.rss.GetChannel().ClearArticles()
+		go scheduler.AddSchedulable(task)
 	}
 }
 
-func (rss *SchedulableRSS) GetTimeRemaining() int {
-	remainingTime := float64(rss.delay) - time.Since(rss.start).Seconds()
+func (task *SchedulableRSS) GetTimeRemaining() int {
+	remainingTime := float64(task.delay) - time.Since(task.start).Seconds()
 	if remainingTime <= 0 {
 		return 0
 	}
 	return int(math.Ceil(remainingTime))
 }
 
-func (rss *SchedulableRSS) IsLoopable() bool {
+func (task *SchedulableRSS) IsLoopable() bool {
 	// TODO: make this true once out of testing
 	return true
 }
 
-func (rss *SchedulableRSS) SetTimeRemaining(remaining int) {
-	rss.delay = remaining
+func (task *SchedulableRSS) SetTimeRemaining(remaining int) {
+	task.delay = remaining
 }
 
-// factory to make schedulable rss
-func CreateSchedulableRSS(rss scraper.RSS, delay int) *SchedulableRSS {
-	return &SchedulableRSS{rss, delay, time.Now()}
+// factory to make schedulable task
+func CreateSchedulableRSS(task scraper.RSS, delay int) *SchedulableRSS {
+	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool)}
 }
 
 // check that we implemented this properly

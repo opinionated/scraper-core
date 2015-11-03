@@ -15,36 +15,36 @@ type SchedulableArticle struct {
 	start   time.Time
 }
 
-func (article *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
-	fmt.Println("goint to get article")
-	err := DoGetArticle(article.Article)
+func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
+	fmt.Println("goint to get task")
+	err := scraper.ScrapeArticle(task.Article)
 	if err != nil {
-		fmt.Println("error getting article")
+		fmt.Println("error getting task")
 		return
 	}
-	fmt.Println("article body is:", article.Article.GetData())
+	fmt.Println("task body is:", task.Article.GetData())
 }
 
-func (article *SchedulableArticle) GetTimeRemaining() int {
-	remainingTime := float64(article.delay) - time.Since(article.start).Seconds()
+func (task *SchedulableArticle) GetTimeRemaining() int {
+	remainingTime := float64(task.delay) - time.Since(task.start).Seconds()
 	if remainingTime <= 0 {
 		return 0
 	}
 	return int(math.Ceil(remainingTime))
 }
 
-func (article *SchedulableArticle) IsLoopable() bool {
+func (task *SchedulableArticle) IsLoopable() bool {
 	// TODO: make this true once out of testing
 	return false
 }
 
-func (article *SchedulableArticle) SetTimeRemaining(remaining int) {
-	article.delay = remaining
+func (task *SchedulableArticle) SetTimeRemaining(remaining int) {
+	task.delay = remaining
 }
 
-// factory to make schedulable article
-func CreateSchedulableArticle(article scraper.Article, delay int) *SchedulableArticle {
-	return &SchedulableArticle{article, delay, time.Now()}
+// factory to make schedulable task
+func CreateSchedulableArticle(task scraper.Article, delay int) *SchedulableArticle {
+	return &SchedulableArticle{task, delay, time.Now()}
 }
 
 // check that we implemented this properly
