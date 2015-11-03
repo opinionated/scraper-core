@@ -6,6 +6,7 @@ import (
 	"github.com/opinionated/scraper-core/scraper"
 	"golang.org/x/net/html"
 	"net/http"
+	// "reflect"
 )
 
 // Parse the wsj opinion rss feed into articles.
@@ -41,17 +42,22 @@ func DoGetArticle(article scraper.Article) error {
 	req.Header.Add("Cookie", "DJSESSION=country%3Dus%7C%7Ccontinent%3Dna%7C%7Cregion%3Dny%7C%7Ccity%3Dpoundtown") 								//messin with cookies
 
 	resp, err := client.Do(req)											//send http request
+	defer resp.Body.Close()
+
 	if err != nil {
 		fmt.Println("oh nose, err with get article http request:", err)
 		return err
 	}
 
-	fmt.Println("\n---------------------------------RESPONSE")			//check to see if X-Article-Template is [full]
-	fmt.Println(resp.Header)
-	fmt.Println("---------------------------------RESPONSE\n")
+	if (resp.Header["X-Article-Template"][0] != "full"){				//check to see if X-Article-Template is [full]
+		fmt.Println("OH GOD OH GOD OH GOD, the template isn't full THEY KNOW\n", err)	//Should panic if this isn't at full
+		return err
+	}	
 
-// DJSESSION=country%3Dus%7C%7Ccontinent%3Dna%7C%7Cregion%3Dny%7C%7Ccity%3Dalbany
-
+	// fmt.Println("\n---------------------------------RESPONSE")
+	// fmt.Println(resp.Header)
+	// fmt.Println(article.GetLink())
+	// fmt.Println("---------------------------------RESPONSE\n")
 
 	defer resp.Body.Close()
 
