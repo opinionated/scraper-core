@@ -1,14 +1,11 @@
 package fetcher_test
 
 import (
-	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/fetcher"
 	mock_rss "github.com/opinionated/scraper-core/mock_rss"
 	"github.com/opinionated/scraper-core/scraper"
-	"io/ioutil"
-	"net/http"
 	"testing"
 	"time"
 )
@@ -18,33 +15,16 @@ func TestSchedulableRSS(t *testing.T) {
 	s := scheduler.MakeScheduler(5, 3)
 	s.Start()
 
-	rss := fetcher.CreateSchedulableRSS(&scraper.WSJRSS{},3)
+	rss := fetcher.CreateSchedulableRSS(&scraper.WSJRSS{}, 3)
 	s.AddSchedulable(rss)
 	time.Sleep(time.Duration(6) * time.Second)
 	s.Stop()
 }
 
 func RunRSS(rss scraper.RSS) {
-	resp, err := http.Get(rss.GetLink())
-	fmt.Println("link is:", rss.GetLink())
+	err := scraper.UpdateRSS(rss)
 	if err != nil {
-		// TODO: error checking here
-		fmt.Println("error getting RSS:", err)
-		return
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("error getting RSS:", err)
-		// TODO: error handling
-		return
-	}
-
-	err = fetcher.GetStories(rss, body)
-	if err != nil {
-		fmt.Println("error getting RSS:", err)
-		return
+		panic(err)
 	}
 }
 
