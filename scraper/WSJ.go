@@ -37,7 +37,8 @@ articleTagLoop:
 
 		switch {
 		case token == html.ErrorToken:
-			fmt.Println("OH NOSE!!!! ERROR before we hit the end")
+			fmt.Println("OH NOSE!!!! ERROR")
+			fmt.Println(token)
 			return nil
 		case token == html.StartTagToken:
 			tmp := parser.Token()
@@ -114,7 +115,9 @@ articleBodyStartLoop:
 			if isParagraph {
 				// start of a new paragraph
 				if depth != 1 {
-					fmt.Println("ERROR: hit new paragraph while depth != 0")
+					parser.Next()
+					tmp = parser.Token()
+					fmt.Println("ERROR: hit new paragraph while depth == ", depth,": ", tmp.Data)
 				}
 				if isInParagraph {
 					fmt.Println("ERROR: hit unexpected new paragraph tag while in paragraph")
@@ -126,7 +129,9 @@ articleBodyStartLoop:
 			isLink := tmp.Data == "a"
 			if isLink {
 				if !isInParagraph {
-					fmt.Println("ERROR: hit unexpected link outside of a paragraph")
+					parser.Next()
+					tmp = parser.Token()
+					fmt.Println("WARN: hit link outside of a paragraph: ", tmp.Data)
 					continue
 				}
 
