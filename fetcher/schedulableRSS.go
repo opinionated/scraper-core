@@ -26,7 +26,7 @@ func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 	}
 
 	// mark all articles as not in list
-	for key, _ := range task.oldArticles {
+	for key := range task.oldArticles {
 		task.oldArticles[key] = false
 	}
 
