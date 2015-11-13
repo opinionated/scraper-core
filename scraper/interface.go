@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"golang.org/x/net/html"
 	"io/ioutil"
-	"net/http"
+	"net/http"				//http.Cookie, http.Get
 )
 
 /**
@@ -28,12 +28,12 @@ type Article interface {
 	GetTitle() string
 }
 
-// RSS contains a link and a channel.
+// RSS contains a link and a channel and cookies!
 // Used when unmarshalling rss feeds.
 type RSS interface {
 	// TODO: add ptr and non-ptr access to these guys
-	GetLink() string
-	GetChannel() RSSChannel
+	GetLink() 					string
+	GetChannel() 				RSSChannel
 }
 
 // RSSChannel is basically an array of Articles.
