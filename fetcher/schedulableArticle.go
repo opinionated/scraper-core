@@ -1,10 +1,14 @@
 package fetcher
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/scraper" // this name creates some ambiguity, get a better name...
+	"io/ioutil"
 	"math"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -22,7 +26,21 @@ func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
 		fmt.Println("error getting task")
 		return
 	}
-	fmt.Println("task body is:", task.Article.GetData())
+	fmt.Println("Article Body: ", task.Article.GetTitle(), "\n", task.Article.GetData())
+
+	filename := strings.Replace(task.Article.GetTitle()," ", "", -1) + ".json"
+	filepath := "./collected/" + filename
+	// TODO: err handling
+    f, _ := os.Create(filepath)
+    defer f.Close()
+
+
+	jsonStr, _ := json.Marshal(task.Article)
+	fmt.Println("Storing Article: ", filepath)
+    err = ioutil.WriteFile(filepath, jsonStr, 0644)
+    if err != nil {
+    	panic(err)
+    }
 }
 
 func (task *SchedulableArticle) GetTimeRemaining() int {

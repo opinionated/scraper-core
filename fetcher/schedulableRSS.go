@@ -35,6 +35,10 @@ func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 	delay := 10 // TODO: create legitimate task delays
 	for i := 0; i < task.rss.GetChannel().GetNumArticles(); i++ {
 		article := task.rss.GetChannel().GetArticle(i)
+		//UNCOMMENT TO RUN ALL RSS
+		// fmt.Println(article)
+		// toSchedule := CreateSchedulableArticle(article, delay)
+		// go scheduler.AddSchedulable(toSchedule)
 		if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
 			toSchedule := CreateSchedulableArticle(article, delay)
 			delay += 10

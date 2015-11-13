@@ -24,5 +24,6 @@ func TestCookie1(t *testing.T) {
 
 	cj.SetCookiesFromHeader(u, res.Header)
 	u2, _ := url.Parse("https://docs.google.com/penis")
+	cj.SetCookies(u, nil)
 	fmt.Println(cj.GetCookies(u2))
 }

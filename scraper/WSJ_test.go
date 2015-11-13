@@ -10,7 +10,7 @@ import (
 
 // TODO: make a compare function
 func TestWSJ1(t *testing.T) {
-	t.Skip("skipping WSJ test for now")
+	// t.Skip("skipping WSJ test for now")
 
 	file, err := os.Open("testData/WSJCarsonHtml.txt") // TODO: Add test file
 	defer file.Close()

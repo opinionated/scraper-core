@@ -2,10 +2,12 @@ package scraper
 
 import (
 	"encoding/xml"
+	// "errors"
 	"fmt"
 	"golang.org/x/net/html"
 	"io/ioutil"
-	"net/http"				//http.Cookie, http.Get
+	"net/http" //http.Cookie, http.Get
+	"net/url"  //url.Parse
 )
 
 /**
@@ -32,8 +34,8 @@ type Article interface {
 // Used when unmarshalling rss feeds.
 type RSS interface {
 	// TODO: add ptr and non-ptr access to these guys
-	GetLink() 					string
-	GetChannel() 				RSSChannel
+	GetLink() string
+	GetChannel() RSSChannel
 }
 
 // RSSChannel is basically an array of Articles.
@@ -78,8 +80,10 @@ func UpdateRSS(rss RSS) error {
 
 // ScrapeArticle fetches and parses the article.
 // article should be provided as a *Article.
+// TODO: fetch inner resources
 func ScrapeArticle(article Article) error {
 	client := &http.Client{}
+	cj := NewCookieJar()
 
 	// build request
 	req, err := http.NewRequest("GET", article.GetLink(), nil) //create http request
@@ -97,7 +101,16 @@ func ScrapeArticle(article Article) error {
 		return err
 	}
 
-	// TODO: check resp.Header to see if X-Article-Template is [full]
+	u, _ := url.Parse(article.GetLink())
+	fmt.Println("INFO:", article.GetTitle())
+	fmt.Println("\tu.Host: ", u.Host)
+	if u.Host == "www.wsj.com" {
+		fmt.Println("\tfull: ", resp.Header["X-Article-Template"][0] == "full")
+		// throw error?
+	}
+
+	cj.SetCookiesFromHeader(u, resp.Header)
+	// TODO: get sub resources
 
 	// parse request
 	parser := html.NewTokenizer(resp.Body)
@@ -111,11 +124,10 @@ func ScrapeArticle(article Article) error {
 
 // build headers for article request
 func buildArticleHeader(req *http.Request) error {
-	req.Header.Add("Referer", "https://www.google.com") //required to get past paywall
 
-	req.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")                   //extra?
-	req.Header.Add("Accept-Language", "en-US,en;q=0.5")                                                           //extra?
-	req.Header.Add("Host", "www.wsj.com")                                                                         //extra?
-	req.Header.Add("Cookie", "DJSESSION=country%3Dus%7C%7Ccontinent%3Dna%7C%7Cregion%3Dny%7C%7Ccity%3Dpoundtown") //messin with cookies
+	req.Header.Add("Referer", "https://www.google.com")                                         //required to get past paywall
+	req.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8") //extra?
+	req.Header.Add("Accept-Language", "en-US,en;q=0.5")                                         //extra?
+	req.Header.Add("Host", "www.wsj.com")                                                       //extra?
 	return nil
 }
