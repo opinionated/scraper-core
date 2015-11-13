@@ -79,8 +79,7 @@ func (task *SchedulableRSS) SetTimeRemaining(remaining int) {
 
 // factory to make schedulable task
 func CreateSchedulableRSS(task scraper.RSS, delay int) *SchedulableRSS {
-	cookiejar, _ := cookiejar.New(nil)
-	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool), cookiejar}
+	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool)}
 }
 
 // check that we implemented this properly
