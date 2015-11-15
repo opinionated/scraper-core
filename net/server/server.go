@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -6,10 +6,7 @@ import (
 	"net/http"
 )
 
-// need to make netRSS task to add scrape targets to a queue.
-// the server pops the next thing off the stack when a request
-// comes through.
-
+// TODO: make this an example?
 func main() {
 
 	b := func(name string) scraper.Article {

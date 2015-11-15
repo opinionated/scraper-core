@@ -1,17 +1,16 @@
-package main
+package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/opinionated/scraper-core/net"
 	"io/ioutil"
 	"net/http"
-	//"strings"
-	"encoding/json"
 )
 
-func main() {
-
+// GetWork asks the server for an article to scrape.
+func GetWork() netScraper.Request {
 	c := &http.Client{}
 
 	// get next work unit
@@ -27,16 +26,22 @@ func main() {
 	}
 
 	js, err := ioutil.ReadAll(resp.Body)
-	fmt.Println("response body is:", string(js))
 	toDo := netScraper.Request{}
 
 	err = json.Unmarshal(js, &toDo)
 	if err != nil {
 		panic(err)
-	}
 
-	fetched := netScraper.Response{toDo.Url, "data"}
-	fetchedJson, err := json.Marshal(fetched)
+	}
+	return toDo
+}
+
+// PostDone posts a completed work item up to the server.
+func PostDone(done netScraper.Response) {
+
+	c := &http.Client{}
+
+	fetchedJson, err := json.Marshal(done)
 	if err != nil {
 		panic(err)
 	}
@@ -54,5 +59,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 }

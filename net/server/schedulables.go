@@ -1,6 +1,7 @@
-package main
+package server
 
 import (
+	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/scraper"
 	"math"
@@ -16,14 +17,8 @@ type SchedulableArticle struct {
 }
 
 func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
-	fmt.Println("adding article")
+	fmt.Println("adding article:", task.Article.GetLink())
 	task.j.Add(task.Article)
-
-	if err != nil {
-		fmt.Println("error getting task")
-		return
-	}
-	fmt.Println("task body is:", task.Article.GetData())
 }
 
 func (task *SchedulableArticle) GetTimeRemaining() int {
@@ -44,8 +39,8 @@ func (task *SchedulableArticle) SetTimeRemaining(remaining int) {
 }
 
 // factory to make schedulable task
-func CreateSchedulableArticle(task scraper.Article, delay int) *SchedulableArticle {
-	return &SchedulableArticle{task, delay, time.Now()}
+func CreateSchedulableArticle(task scraper.Article, delay int, j *Jefe) *SchedulableArticle {
+	return &SchedulableArticle{task, delay, time.Now(), j}
 }
 
 // check that we implemented this properly
@@ -60,6 +55,7 @@ type SchedulableRSS struct {
 	delay       int
 	start       time.Time
 	oldArticles map[string]bool
+	j           *Jefe
 }
 
 func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
@@ -82,7 +78,7 @@ func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 	for i := 0; i < task.rss.GetChannel().GetNumArticles(); i++ {
 		article := task.rss.GetChannel().GetArticle(i)
 		if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
-			toSchedule := CreateSchedulableArticle(article, delay)
+			toSchedule := CreateSchedulableArticle(article, delay, task.j)
 			delay += 10
 			go scheduler.AddSchedulable(toSchedule)
 		}
@@ -124,8 +120,8 @@ func (task *SchedulableRSS) SetTimeRemaining(remaining int) {
 }
 
 // factory to make schedulable task
-func CreateSchedulableRSS(task scraper.RSS, delay int) *SchedulableRSS {
-	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool)}
+func CreateSchedulableRSS(task scraper.RSS, delay int, j *Jefe) *SchedulableRSS {
+	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool), j}
 }
 
 // check that we implemented this properly
