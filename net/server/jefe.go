@@ -68,7 +68,7 @@ func (j *Jefe) Handle() func(rw http.ResponseWriter, request *http.Request) {
 func (j *Jefe) getHandle(rw http.ResponseWriter, request *http.Request) {
 	var work netScraper.Request
 	if j.hasNext() {
-		next := j.Pop()
+		next := j.pop()
 		work = netScraper.Request{next.GetLink()}
 	} else {
 		work = netScraper.EmptyRequest()

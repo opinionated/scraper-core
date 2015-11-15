@@ -29,7 +29,7 @@ func doSimpleServer() {
 	// helper function to add tasks to jefe
 	b := func(name string, delay int) {
 		article := scraper.WSJArticle{Link: name}
-		t := server.CreateSchedulableArticle(&article, delay, j)
+		t := server.CreateSchedulableArticle(&article, delay, &j)
 		j.AddSchedulable(t)
 	}
 
