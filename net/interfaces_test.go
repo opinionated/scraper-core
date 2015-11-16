@@ -1,6 +1,7 @@
 package netScraper_test
 
 import (
+	"fmt"
 	"github.com/opinionated/scraper-core/net"
 	"github.com/opinionated/scraper-core/net/client"
 	"github.com/opinionated/scraper-core/net/server"
@@ -9,6 +10,11 @@ import (
 	"testing"
 	"time"
 )
+
+//
+// NOTE: run tests one at a time until we have graceful server shutdown
+//
+//
 
 func StartServer(j *server.Jefe) {
 	http.HandleFunc("/", j.Handle())
@@ -66,6 +72,63 @@ func TestServerSimple(t *testing.T) {
 		if request.Url != "" {
 			response := netScraper.Response{Url: request.Url, Data: "data"}
 			client.PostDone(response)
+		}
+
+		time.Sleep(time.Duration(4) * time.Second)
+	}
+}
+
+func TestServerBad(t *testing.T) {
+	// drop a connection
+	// launch the server
+	doSimpleServer()
+
+	seenTwo := false
+	expectedUrls := []string{"one", "two", "three", "two"}
+	for _, expected := range expectedUrls {
+
+		request := client.GetWork()
+		if request.Url != expected {
+			t.Errorf("expected:", expected, "recieved:", request.Url, "\n")
+		}
+
+		fmt.Println("got request:", request.Url)
+		if request.Url != "" {
+			response := netScraper.Response{Url: request.Url, Data: "data"}
+			if request.Url == "two" && !seenTwo {
+				seenTwo = true
+				response.Data = ""
+			}
+			client.PostDone(response)
+		}
+
+		time.Sleep(time.Duration(4) * time.Second)
+	}
+}
+
+func TestServerDrop(t *testing.T) {
+	// make a bad response
+	// launch the server
+	doSimpleServer()
+
+	seenTwo := false
+	expectedUrls := []string{"one", "two", "three", "two"}
+	for _, expected := range expectedUrls {
+
+		request := client.GetWork()
+		if request.Url != expected {
+			t.Errorf("expected:", expected, "recieved:", request.Url, "\n")
+		}
+
+		fmt.Println("got request:", request.Url)
+		if request.Url != "" {
+			response := netScraper.Response{Url: request.Url, Data: "data"}
+			if request.Url == "two" && !seenTwo {
+				seenTwo = true
+				// don't send
+			} else {
+				client.PostDone(response)
+			}
 		}
 
 		time.Sleep(time.Duration(4) * time.Second)

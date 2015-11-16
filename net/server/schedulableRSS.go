@@ -8,48 +8,6 @@ import (
 	"time"
 )
 
-// make an Article schedulable
-type SchedulableArticle struct {
-	Article scraper.Article
-	delay   int
-	start   time.Time
-	j       *Jefe
-}
-
-func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
-	fmt.Println("adding article:", task.Article.GetLink())
-	task.j.Add(task.Article)
-}
-
-func (task *SchedulableArticle) GetTimeRemaining() int {
-	remainingTime := float64(task.delay) - time.Since(task.start).Seconds()
-	if remainingTime <= 0 {
-		return 0
-	}
-	return int(math.Ceil(remainingTime))
-}
-
-func (task *SchedulableArticle) IsLoopable() bool {
-	// TODO: make this true once out of testing
-	return false
-}
-
-func (task *SchedulableArticle) SetTimeRemaining(remaining int) {
-	task.delay = remaining
-}
-
-// factory to make schedulable task
-func CreateSchedulableArticle(task scraper.Article, delay int, j *Jefe) *SchedulableArticle {
-	return &SchedulableArticle{task, delay, time.Now(), j}
-}
-
-// check that we implemented this properly
-var _ scheduler.Schedulable = (*SchedulableArticle)(nil)
-
-//
-//
-//
-// make an RSS schedulable
 type SchedulableRSS struct {
 	rss         scraper.RSS
 	delay       int

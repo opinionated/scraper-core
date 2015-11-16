@@ -21,18 +21,27 @@ type Jefe struct {
 	// manage RSS pings, manage adds
 	s *scheduler.Scheduler
 
-	// TODO: make work queue
-	queue []scraper.Article
+	queue        []scraper.Article
+	openRequests map[string]chan int
 }
 
 // NewJefe creates a new jefe with an unstarted scheduler.
 func NewJefe() Jefe {
-	return Jefe{s: scheduler.MakeScheduler(5, 5)}
+	return Jefe{s: scheduler.MakeScheduler(5, 5), openRequests: make(map[string]chan int)}
 }
 
 // Start the scheduler.
 func (j *Jefe) Start() {
 	j.s.Start()
+}
+
+func (j *Jefe) Stop() {
+	go j.s.Stop()
+
+	// close all the open requests
+	for _, c := range j.openRequests {
+		close(c)
+	}
 }
 
 // AddSchedulable puts a new task in the scheduler.
@@ -69,6 +78,8 @@ func (j *Jefe) getHandle(rw http.ResponseWriter, request *http.Request) {
 	var work netScraper.Request
 	if j.hasNext() {
 		next := j.pop()
+		j.updateStatus(next.GetLink(), ARTICLE_SENT)
+		fmt.Println("next is:", next.GetLink())
 		work = netScraper.Request{next.GetLink()}
 	} else {
 		work = netScraper.EmptyRequest()
@@ -84,6 +95,7 @@ func (j *Jefe) getHandle(rw http.ResponseWriter, request *http.Request) {
 }
 
 // handle a POST request
+//
 func (j *Jefe) postHandle(rw http.ResponseWriter, request *http.Request) {
 
 	js, err := ioutil.ReadAll(request.Body)
@@ -91,16 +103,30 @@ func (j *Jefe) postHandle(rw http.ResponseWriter, request *http.Request) {
 		panic(err)
 	}
 
-	fmt.Println("js:", string(js))
+	response := netScraper.Response{}
+	err = json.Unmarshal(js, &response)
 
-	fmt.Println("writing post")
+	fmt.Println("response:", response)
+
+	if response.Data != "" {
+		// if got good response
+		j.updateStatus(response.Url, ARTICLE_OK)
+		close(j.openRequests[response.Url])
+		delete(j.openRequests, response.Url)
+	} else {
+		fmt.Println("response for article")
+		// tell the article schedulable that is needs to re-add
+		j.updateStatus(response.Url, ARTICLE_BAD)
+
+	}
 	rw.WriteHeader(http.StatusOK)
 }
 
 // Add an article to the ready queue. The article will be scraped by a
 // client then sent back up to the jefe.
-func (j *Jefe) Add(article scraper.Article) {
+func (j *Jefe) AddArticle(article scraper.Article, c chan int) {
 	j.queue = append(j.queue, article)
+	j.openRequests[article.GetLink()] = c
 }
 
 // for internal use, removes the next article from the queue
@@ -113,4 +139,17 @@ func (j *Jefe) pop() scraper.Article {
 // checks if there is an article ready on the queue
 func (j Jefe) hasNext() bool {
 	return len(j.queue) > 0
+}
+
+func (j Jefe) updateStatus(name string, status int) {
+	if j.openRequests[name] == nil {
+		return
+	}
+	select {
+
+	case j.openRequests[name] <- status:
+
+	default:
+		panic("could not send status")
+	}
 }
