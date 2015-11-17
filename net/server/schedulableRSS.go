@@ -1,4 +1,4 @@
-package fetcher
+package server
 
 import (
 	"fmt"
@@ -8,16 +8,16 @@ import (
 	"time"
 )
 
-// make an RSS schedulable
 type SchedulableRSS struct {
 	rss         scraper.RSS
 	delay       int
 	start       time.Time
 	oldArticles map[string]bool
+	j           *Jefe
 }
 
 func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
-	fmt.Println("goint to run RSS")
+	fmt.Println("going to run RSS")
 
 	err := scraper.UpdateRSS(task.rss)
 	if err != nil {
@@ -36,7 +36,7 @@ func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 	for i := 0; i < task.rss.GetChannel().GetNumArticles(); i++ {
 		article := task.rss.GetChannel().GetArticle(i)
 		if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
-			toSchedule := CreateSchedulableArticle(article, delay)
+			toSchedule := CreateSchedulableArticle(article, delay, task.j)
 			delay += 10
 			go scheduler.AddSchedulable(toSchedule)
 		}
@@ -78,8 +78,8 @@ func (task *SchedulableRSS) SetTimeRemaining(remaining int) {
 }
 
 // factory to make schedulable task
-func CreateSchedulableRSS(task scraper.RSS, delay int) *SchedulableRSS {
-	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool)}
+func CreateSchedulableRSS(task scraper.RSS, delay int, j *Jefe) *SchedulableRSS {
+	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool), j}
 }
 
 // check that we implemented this properly
