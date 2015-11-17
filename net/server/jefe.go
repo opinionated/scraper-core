@@ -15,7 +15,7 @@ import (
 // articles to scrape via http GET. If an article is ready for scraping the
 // Jefe sends it to the client. The client tries to scrape the article, then
 // sends the results back to the Jefe via http POST. The Jefe automatically
-// requests the article if it doesn't get scraped in a reasonable amount of
+// requeues the article if it doesn't get scraped in a reasonable amount of
 // time.
 //
 // The Jefe also manages the scheduler, which in turn manages rss pings.
