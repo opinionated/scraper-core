@@ -117,7 +117,7 @@ articleBodyStartLoop:
 				if depth != 1 {
 					parser.Next()
 					tmp = parser.Token()
-					fmt.Println("ERROR: hit new paragraph while depth == ", depth,": ", tmp.Data)
+					fmt.Println("ERROR: hit new paragraph while depth == ", depth, ": ", tmp.Data)
 				}
 				if isInParagraph {
 					fmt.Println("ERROR: hit unexpected new paragraph tag while in paragraph")
