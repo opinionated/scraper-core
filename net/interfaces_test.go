@@ -47,6 +47,12 @@ func doSimpleServer() {
 
 }
 
+func PanicErr(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 func TestServerSimple(t *testing.T) {
 	// acts like a client
 	// starts the server then adds 3 articles
@@ -59,19 +65,21 @@ func TestServerSimple(t *testing.T) {
 	expectedUrls := []string{"one", "two", "three"}
 	for _, expected := range expectedUrls {
 
-		request := client.GetWork()
-		if request.Url != expected {
-			t.Errorf("expected:", expected, "recieved:", request.Url, "\n")
+		request, err := client.Get()
+		PanicErr(err)
+		if request.URL != expected {
+			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
 		}
 
-		empty := client.GetWork()
+		empty, err := client.Get()
+		PanicErr(err)
 		if !netScraper.IsEmptyRequest(empty) {
-			t.Errorf("expected empty request, got:", empty.Url)
+			t.Errorf("expected empty request, got:", empty.URL)
 		}
 
-		if request.Url != "" {
-			response := netScraper.Response{Url: request.Url, Data: "data"}
-			client.PostDone(response)
+		if request.URL != "" {
+			response := netScraper.Response{URL: request.URL, Data: "data", Error: netScraper.ResponseOk}
+			client.Post(response)
 		}
 
 		time.Sleep(time.Duration(4) * time.Second)
@@ -87,19 +95,20 @@ func TestServerBad(t *testing.T) {
 	expectedUrls := []string{"one", "two", "three", "two"}
 	for _, expected := range expectedUrls {
 
-		request := client.GetWork()
-		if request.Url != expected {
-			t.Errorf("expected:", expected, "recieved:", request.Url, "\n")
+		request, err := client.Get()
+		PanicErr(err)
+		if request.URL != expected {
+			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
 		}
 
-		fmt.Println("got request:", request.Url)
-		if request.Url != "" {
-			response := netScraper.Response{Url: request.Url, Data: "data"}
-			if request.Url == "two" && !seenTwo {
+		fmt.Println("got request:", request.URL)
+		if request.URL != "" {
+			response := netScraper.Response{URL: request.URL, Data: "data", Error: netScraper.ResponseOk}
+			if request.URL == "two" && !seenTwo {
 				seenTwo = true
-				response.Data = ""
+				response.Error = netScraper.ResponseBad
 			}
-			client.PostDone(response)
+			client.Post(response)
 		}
 
 		time.Sleep(time.Duration(4) * time.Second)
@@ -115,19 +124,20 @@ func TestServerDrop(t *testing.T) {
 	expectedUrls := []string{"one", "two", "three", "two"}
 	for _, expected := range expectedUrls {
 
-		request := client.GetWork()
-		if request.Url != expected {
-			t.Errorf("expected:", expected, "recieved:", request.Url, "\n")
+		request, err := client.Get()
+		PanicErr(err)
+		if request.URL != expected {
+			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
 		}
 
-		fmt.Println("got request:", request.Url)
-		if request.Url != "" {
-			response := netScraper.Response{Url: request.Url, Data: "data"}
-			if request.Url == "two" && !seenTwo {
+		fmt.Println("got request:", request.URL)
+		if request.URL != "" {
+			response := netScraper.Response{URL: request.URL, Data: "data", Error: netScraper.ResponseOk}
+			if request.URL == "two" && !seenTwo {
 				seenTwo = true
 				// don't send
 			} else {
-				client.PostDone(response)
+				_ = client.Post(response)
 			}
 		}
 

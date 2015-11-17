@@ -17,7 +17,7 @@ type SchedulableRSS struct {
 }
 
 func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
-	fmt.Println("goint to run RSS")
+	fmt.Println("going to run RSS")
 
 	err := scraper.UpdateRSS(task.rss)
 	if err != nil {

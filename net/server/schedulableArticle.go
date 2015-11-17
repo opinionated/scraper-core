@@ -24,9 +24,11 @@ func toString(c int) string {
 	return "BAD"
 }
 
-// make an Article schedulable
+// SchedulableArticle adds an article to the Jefe's ready queue then
+// manages the article until it is scraped properly. It will requeue
+// the article if needed.
 type SchedulableArticle struct {
-	Article scraper.Article
+	article scraper.Article
 	delay   int
 	start   time.Time
 	j       *Jefe
@@ -34,41 +36,47 @@ type SchedulableArticle struct {
 }
 
 func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
+	// check if the task ran while we were waiting
 	select {
 	case result := <-task.ran:
-		fmt.Println("top result for article:", task.Article.GetLink(), "is:", toString(result))
+		fmt.Println("top result for article:", task.article.GetLink(), "is:", toString(result))
 
 	default:
 
 	}
-	fmt.Println("adding article:", task.Article.GetLink())
-	task.j.AddArticle(task.Article, task.ran)
+
+	fmt.Println("adding article:", task.article.GetLink())
+	task.j.AddArticle(task.article, task.ran)
 
 	// wait for the article to go off to a client
 	res := <-task.ran
-	//fmt.Println("wait result for article:", task.Article.GetLink(), "is:", toString(res))
 	if res == ARTICLE_OK {
 		fmt.Println("article OK from res")
 		return
 	}
 
+	// once the article is at the client, wait a reasonable amount of time
+	// if the article did not come back in the expected time, requeue it
+	var waitTime time.Duration = 2
+
 	select {
 	case result := <-task.ran:
-		fmt.Println("article:", task.Article.GetLink(), "is:", toString(result))
+		fmt.Println("article:", task.article.GetLink(), "is:", toString(result))
 		if result != ARTICLE_BAD {
 			return // finish this
 		}
 		// else fall through to requeue
 
-	case <-time.After(2 * time.Second):
+	case <-time.After(waitTime * time.Second):
 		// fall through to requeue
 	}
 
-	fmt.Println("requeueing:", task.Article.GetLink())
+	fmt.Println("requeueing:", task.article.GetLink())
+
 	// re-queue
 	task.start = time.Now()
+	task.delay = 0
 	scheduler.AddSchedulable(task)
-
 }
 
 func (task *SchedulableArticle) GetTimeRemaining() int {

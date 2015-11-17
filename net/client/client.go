@@ -9,15 +9,19 @@ import (
 	"net/http"
 )
 
-// GetWork asks the server for an article to scrape.
-func GetWork() netScraper.Request {
+// TODO: client needs to handle connection errors
+// TODO: "main" client logic ie scraping, polling etc
+// TODO: see if there is a better way than switch statement to choose scraper type
+
+// Get the server for an article to scrape.
+func Get() (netScraper.Request, error) {
 	c := &http.Client{}
 
 	// get next work unit
 	resp, err := c.Get("http://localhost:8080/")
 	defer resp.Body.Close()
 	if err != nil {
-		panic(err)
+		return netScraper.EmptyRequest(), err
 	}
 
 	if resp.StatusCode != 200 {
@@ -30,33 +34,38 @@ func GetWork() netScraper.Request {
 
 	err = json.Unmarshal(js, &toDo)
 	if err != nil {
-		panic(err)
+		return netScraper.EmptyRequest(), err
 
 	}
-	return toDo
+	return toDo, err
 }
 
-// PostDone posts a completed work item up to the server.
-func PostDone(done netScraper.Response) {
+// Post posts a completed work item up to the server.
+func Post(done netScraper.Response) error {
 
 	c := &http.Client{}
 
-	fetchedJson, err := json.Marshal(done)
-	if err != nil {
-		panic(err)
-	}
-	req, err := http.NewRequest("POST",
-		"http://localhost:8080/",
-		bytes.NewReader(fetchedJson))
+	fetchedJSON, err := json.Marshal(done)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	req, err := http.NewRequest("POST",
+		"http://localhost:8080/",
+		bytes.NewReader(fetchedJSON))
+
+	if err != nil {
+		return err
+	}
+
 	req.Header.Set("content-type", "application/json")
 
 	postResp, err := c.Do(req)
 	defer postResp.Body.Close()
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
