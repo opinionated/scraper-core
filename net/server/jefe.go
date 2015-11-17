@@ -57,7 +57,7 @@ func (j *Jefe) Stop() {
 
 // AddSchedulable adds a new schedulable to the scheduler.
 func (j *Jefe) AddSchedulable(s scheduler.Schedulable) {
-	j.s.AddSchedulable(s)
+	j.s.Add(s)
 }
 
 // SetCycleTime sets the scheduler's cycle time.

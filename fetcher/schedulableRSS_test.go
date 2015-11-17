@@ -16,7 +16,7 @@ func TestSchedulableRSS(t *testing.T) {
 	s.Start()
 
 	rss := fetcher.CreateSchedulableRSS(&scraper.WSJRSS{}, 3)
-	s.AddSchedulable(rss)
+	s.Add(rss)
 	time.Sleep(time.Duration(6) * time.Second)
 	s.Stop()
 }
@@ -74,7 +74,7 @@ func TestSchedulableRSSMock(t *testing.T) {
 
 	// create scheduler and run real schedulable with rss mock
 	s := scheduler.MakeScheduler(5, 5)
-	go s.AddSchedulable(fetcher.CreateSchedulableRSS(rss, 4))
+	go s.Add(fetcher.CreateSchedulableRSS(rss, 4))
 
 	// send signal done to loop in the background until we are done with the test
 	go SignalDone(s, c)
