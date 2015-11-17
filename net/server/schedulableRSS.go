@@ -16,7 +16,7 @@ type SchedulableRSS struct {
 	j           *Jefe
 }
 
-func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
+func (task *SchedulableRSS) Run(scheduler *scheduler.Scheduler) {
 	fmt.Println("going to run RSS")
 
 	err := scraper.UpdateRSS(task.rss)
@@ -38,7 +38,7 @@ func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 		if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
 			toSchedule := CreateSchedulableArticle(article, delay, task.j)
 			delay += 10
-			go scheduler.AddSchedulable(toSchedule)
+			go scheduler.Add(toSchedule)
 		}
 
 		// add or update what we found
@@ -56,11 +56,11 @@ func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 	if task.IsLoopable() && scheduler.IsRunning() {
 		task.start = time.Now()
 		task.rss.GetChannel().ClearArticles()
-		go scheduler.AddSchedulable(task)
+		go scheduler.Add(task)
 	}
 }
 
-func (task *SchedulableRSS) GetTimeRemaining() int {
+func (task *SchedulableRSS) TimeRemaining() int {
 	remainingTime := float64(task.delay) - time.Since(task.start).Seconds()
 	if remainingTime <= 0 {
 		return 0

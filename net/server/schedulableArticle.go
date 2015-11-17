@@ -35,7 +35,7 @@ type SchedulableArticle struct {
 	ran     chan int
 }
 
-func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
+func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 	// check if the task ran while we were waiting
 	select {
 	case result := <-task.ran:
@@ -76,10 +76,10 @@ func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
 	// re-queue
 	task.start = time.Now()
 	task.delay = 0
-	scheduler.AddSchedulable(task)
+	scheduler.Add(task)
 }
 
-func (task *SchedulableArticle) GetTimeRemaining() int {
+func (task *SchedulableArticle) TimeRemaining() int {
 	remainingTime := float64(task.delay) - time.Since(task.start).Seconds()
 	if remainingTime <= 0 {
 		return 0
