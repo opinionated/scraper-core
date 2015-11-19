@@ -11,6 +11,16 @@ import (
 	"sync"
 )
 
+// TODO: handle corner case, all kinds of wierd ones:
+// 	article times out after wait, goes back into queue, then :
+// 		client replies before article get put back into ready queue
+// 		client replies after article is put into ready queue but before it is sent to a new client
+// 		client replies after article is put back into ready queue and sent to a new client
+// I think I handled these, should test them though
+
+// the only behavior this should have in these and other cases is that all articles eventualy get
+// scraped (possibly multiple times), but are stored exactly once per article
+
 // Jefe interfaces a scheduler and a task server. Clients ask the Jefe for
 // articles to scrape via http GET. If an article is ready for scraping the
 // Jefe sends it to the client. The client tries to scrape the article, then
@@ -92,11 +102,15 @@ func (j *Jefe) getHandle(rw http.ResponseWriter, request *http.Request) {
 	if j.hasNext() {
 		next := j.pop()
 
-		// signal that the article is off for scraping
-		j.updateStatus(next.GetLink(), ARTICLE_SENT)
+		if _, ok := j.openRequests[next.GetLink()]; ok {
+			// signal that the article is off for scraping
+			j.updateStatus(next.GetLink(), ARTICLE_SENT)
 
-		fmt.Println("next is:", next.GetLink())
-		work = netScraper.Request{next.GetLink()}
+			work = netScraper.Request{next.GetLink()}
+		} else {
+			// article has already been taken care of, discard it
+			work = netScraper.EmptyRequest()
+		}
 
 	} else { // !hasNext
 		work = netScraper.EmptyRequest()
@@ -130,17 +144,23 @@ func (j *Jefe) postHandle(rw http.ResponseWriter, request *http.Request) {
 
 	fmt.Println("response:", response)
 
-	if response.Error == netScraper.ResponseOk {
+	_, isOpen := j.openRequests[response.URL]
+	if isOpen && response.Error == netScraper.ResponseOk {
 		// got a good response
 		j.updateStatus(response.URL, ARTICLE_OK)
 
 		close(j.openRequests[response.URL])
 		delete(j.openRequests, response.URL)
 
-	} else {
+	} else if isOpen {
 		fmt.Println("response for article")
 		// tell the article schedulable that is needs to re-add
+		// don't remove it from the openRequests in case the article
+		// comes back before it gets added again
 		j.updateStatus(response.URL, ARTICLE_BAD)
+
+	} else {
+		// got an article that has already been taken care
 
 	}
 

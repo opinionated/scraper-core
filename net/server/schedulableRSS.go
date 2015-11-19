@@ -17,7 +17,6 @@ type SchedulableRSS struct {
 }
 
 func (task *SchedulableRSS) Run(scheduler *scheduler.Scheduler) {
-	fmt.Println("going to run RSS")
 
 	err := scraper.UpdateRSS(task.rss)
 	if err != nil {
@@ -32,12 +31,13 @@ func (task *SchedulableRSS) Run(scheduler *scheduler.Scheduler) {
 
 	// schedule any new articles
 	// an article is new if it wasn't in the last RSS ping
-	delay := 10 // TODO: create legitimate task delays
+	delay := 5 // TODO: create legitimate task delays
 	for i := 0; i < task.rss.GetChannel().GetNumArticles(); i++ {
 		article := task.rss.GetChannel().GetArticle(i)
+
 		if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
 			toSchedule := CreateSchedulableArticle(article, delay, task.j)
-			delay += 10
+			delay += 5
 			go scheduler.Add(toSchedule)
 		}
 
