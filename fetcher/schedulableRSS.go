@@ -32,18 +32,18 @@ func (task *SchedulableRSS) DoWork(scheduler *scheduler.Scheduler) {
 
 	// schedule any new articles
 	// an article is new if it wasn't in the last RSS ping
-	delay := 10 // TODO: create legitimate task delays
+	delay := 0 // TODO: create legitimate task delays
 	for i := 0; i < task.rss.GetChannel().GetNumArticles(); i++ {
 		article := task.rss.GetChannel().GetArticle(i)
 		//UNCOMMENT TO RUN ALL RSS
-		// fmt.Println(article)
-		// toSchedule := CreateSchedulableArticle(article, delay)
-		// go scheduler.AddSchedulable(toSchedule)
-		if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
-			toSchedule := CreateSchedulableArticle(article, delay)
-			delay += 10
-			go scheduler.AddSchedulable(toSchedule)
-		}
+		fmt.Println(article)
+		toSchedule := CreateSchedulableArticle(article, delay)
+		go scheduler.AddSchedulable(toSchedule)
+		// if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
+		// 	toSchedule := CreateSchedulableArticle(article, delay)
+			// delay += 10
+		// 	go scheduler.AddSchedulable(toSchedule)
+		// }
 
 		// add or update what we found
 		task.oldArticles[article.GetLink()] = true

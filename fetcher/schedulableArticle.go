@@ -19,25 +19,26 @@ type SchedulableArticle struct {
 	start   time.Time
 }
 
-func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
-	fmt.Println("goint to get task")
-	err := scraper.ScrapeArticle(task.Article)
+func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {		//controller for article
+	fmt.Println("goint to scrape article")
+
+	err := scraper.ScrapeArticle(task.Article)									//call scraper
 	if err != nil {
-		fmt.Println("error getting task")
+		fmt.Println("error scraping article")
 		return
 	}
 	fmt.Println("Article Body: ", task.Article.GetTitle(), "\n", task.Article.GetData())
 
-	filename := strings.Replace(task.Article.GetTitle()," ", "", -1) + ".json"
-	filepath := "./collected/" + filename
+	//writing to file
 	// TODO: err handling
-    f, _ := os.Create(filepath)
-    defer f.Close()
+	filename := strings.Replace(task.Article.GetTitle()," ", "", -1) + ".json"	//make name
+	filepath := "./collected/" + filename										//set filepath
+	fmt.Println("Storing Article: ", filepath)			
+    f, _ := os.Create(filepath)													//create file			
+    defer f.Close()														
 
-
-	jsonStr, _ := json.Marshal(task.Article)
-	fmt.Println("Storing Article: ", filepath)
-    err = ioutil.WriteFile(filepath, jsonStr, 0644)
+	jsonStr, _ := json.Marshal(task.Article)									//convert article to json
+    err = ioutil.WriteFile(filepath, jsonStr, 0644)								//write to file
     if err != nil {
     	panic(err)
     }
