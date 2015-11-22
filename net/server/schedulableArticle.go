@@ -41,6 +41,7 @@ func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 	case result := <-task.ran:
 		fmt.Println("top result for article:", task.article.GetLink(), "is:", toString(result))
 
+		return
 	default:
 
 	}
@@ -51,7 +52,7 @@ func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 	// wait for the article to go off to a client
 	res := <-task.ran
 	if res == ARTICLE_OK {
-		fmt.Println("article OK from res")
+		fmt.Println("article", task.article.GetLink(), "OK from res")
 		return
 	}
 
@@ -75,7 +76,7 @@ func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 
 	// re-queue
 	task.start = time.Now()
-	task.delay = 0
+	task.delay = 2 // set delay to 2 here b/c prev delay was relative
 	scheduler.Add(task)
 }
 
