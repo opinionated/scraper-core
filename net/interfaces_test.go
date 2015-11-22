@@ -1,6 +1,7 @@
 package netScraper_test
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/opinionated/scraper-core/net"
 	"github.com/opinionated/scraper-core/net/client"
@@ -13,30 +14,61 @@ import (
 
 //
 // NOTE: run tests one at a time until we have graceful server shutdown
+// these tests use lots of hardcoded values, and may not work if you change
+// the timings here or somewhere else.
 //
 //
 
-func StartServer(j *server.Jefe) {
-	http.HandleFunc("/", j.Handle())
+// can use testClient to test validity, but not effect. Think about
+// expanding it to be more robust if we need to write more tests
+type testClient struct {
+	found map[string]bool
+}
+
+func (t testClient) checkAll() (string, bool) {
+	var buffer bytes.Buffer
+	for key, value := range t.found {
+		if !value {
+			buffer.WriteString("did not receive expected target:", key, "\n")
+		}
+	}
+	return buffer.String()
+}
+
+func (t testClient) add(url string) {
+	t.found[url] = true
+}
+
+func newTC(expected []string) testClient {
+	t := testClient{make(map[string]bool)}
+	for _, e := range expected {
+		t.found[e] = false
+	}
+}
+
+// start the servr on local:8080
+func StartServer(s *server.ScrapeServer) {
+	http.HandleFunc("/", s.Handle())
 	http.ListenAndServe(":8080", nil)
 }
 
+// spin up the server and add three articles staggered
 func doSimpleServer() {
 
-	j := server.NewJefe()
+	s := server.NewScrapeServer()
 
 	// get the jefe going
-	go StartServer(&j)
+	go StartServer(s)
 
 	// make the scheduler loop quick
-	j.SetCycleTime(1)
-	j.Start()
+	s.GetJefe().SetCycleTime(1)
+	s.GetJefe().Start()
 
 	// helper function to add tasks to jefe
 	b := func(name string, delay int) {
 		article := scraper.WSJArticle{Link: name}
-		t := server.CreateSchedulableArticle(&article, delay, &j)
-		j.AddSchedulable(t)
+		t := server.CreateSchedulableArticle(&article, delay, s.GetJefe())
+		s.GetJefe().AddSchedulable(t)
 	}
 
 	// add three tasks
@@ -61,10 +93,12 @@ func TestServerSimple(t *testing.T) {
 
 	// launch the server
 	doSimpleServer()
+	time.Sleep(1 * time.Second)
 
 	expectedUrls := []string{"one", "two", "three"}
 	for _, expected := range expectedUrls {
 
+		fmt.Println("client fetching")
 		request, err := client.Get()
 		PanicErr(err)
 		if request.URL != expected {
@@ -86,12 +120,110 @@ func TestServerSimple(t *testing.T) {
 	}
 }
 
+func TestServerSingleLatePreRerun(t *testing.T) {
+	// respond late to a request
+	doSimpleServer()
+
+	seenTwo := false
+	time.Sleep(1 * time.Second)
+	expectedUrls := []string{"one", "two", "three"}
+	for _, expected := range expectedUrls {
+
+		request, err := client.Get()
+		PanicErr(err)
+		if request.URL != expected {
+			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
+		}
+
+		fmt.Println("got request:", request.URL)
+		if request.URL != "" {
+			response := netScraper.Response{URL: request.URL, Data: "data", Error: netScraper.ResponseOk}
+			if request.URL == "two" && !seenTwo {
+				seenTwo = true
+				time.Sleep(time.Duration(3) * time.Second)
+			}
+			client.Post(response)
+		}
+
+		time.Sleep(time.Duration(4) * time.Second)
+	}
+}
+
+func TestServerSingleLatePostRerun(t *testing.T) {
+	// respond late to a request
+	doSimpleServer()
+
+	seenTwo := false
+	time.Sleep(1 * time.Second)
+	expectedUrls := []string{"one", "two", "three"}
+	for _, expected := range expectedUrls {
+
+		request, err := client.Get()
+		PanicErr(err)
+		if request.URL != expected {
+			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
+		}
+
+		fmt.Println("got request:", request.URL)
+		if request.URL != "" {
+			response := netScraper.Response{URL: request.URL, Data: "data", Error: netScraper.ResponseOk}
+			if request.URL == "two" && !seenTwo {
+				seenTwo = true
+				time.Sleep(time.Duration(6) * time.Second)
+			}
+			client.Post(response)
+		}
+
+		time.Sleep(time.Duration(4) * time.Second)
+	}
+}
+
+func TestServerMultiLatePostRerun(t *testing.T) {
+	// respond late to a request
+	doSimpleServer()
+
+	seenTwo := false
+	expectedUrls := []string{"one", "two", "three", "two"}
+	time.Sleep(1 * time.Second)
+	i := 0
+	for _, expected := range expectedUrls {
+
+		request, err := client.Get()
+		PanicErr(err)
+		if request.URL != expected {
+			t.Errorf("expected: %s recieved: %s\n", request.URL, expected)
+		}
+		i++
+		fmt.Println("got request:", request.URL)
+		if request.URL != "" {
+			response := netScraper.Response{URL: request.URL, Data: "data", Error: netScraper.ResponseOk}
+			if request.URL == "two" && !seenTwo {
+				seenTwo = true
+				go func() {
+					time.Sleep(time.Duration(12) * time.Second)
+					client.Post(response)
+				}()
+			} else {
+				client.Post(response)
+			}
+
+		}
+
+		time.Sleep(time.Duration(4) * time.Second)
+	}
+
+	if i != len(expectedUrls) {
+		t.Errorf("did not get through all the urls")
+	}
+}
+
 func TestServerBad(t *testing.T) {
-	// drop a connection
+	// respond with an error
 	// launch the server
 	doSimpleServer()
 
 	seenTwo := false
+	time.Sleep(1 * time.Second)
 	expectedUrls := []string{"one", "two", "three", "two"}
 	for _, expected := range expectedUrls {
 
@@ -116,11 +248,12 @@ func TestServerBad(t *testing.T) {
 }
 
 func TestServerDrop(t *testing.T) {
-	// make a bad response
+	// drop a request
 	// launch the server
 	doSimpleServer()
 
 	seenTwo := false
+	time.Sleep(1 * time.Second)
 	expectedUrls := []string{"one", "two", "three", "two"}
 	for _, expected := range expectedUrls {
 

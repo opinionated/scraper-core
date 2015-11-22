@@ -12,20 +12,21 @@ import (
 )
 
 func doFullServer() *server.Jefe {
-	j := server.NewJefe()
+	s := server.NewScrapeServer()
+	j := s.GetJefe()
 
 	// get the jefe going
-	go StartServer(&j)
+	go StartServer(s)
 
 	// make the scheduler loop quick
 	j.SetCycleTime(1)
 	j.Start()
 
 	// build RSS and add it
-	rss := server.CreateSchedulableRSS(&scraper.WSJRSS{}, 10, &j)
+	rss := server.CreateSchedulableRSS(&scraper.WSJRSS{}, 10, j)
 	j.AddSchedulable(rss)
 
-	return &j
+	return j
 }
 
 func TestIntegrationA(t *testing.T) {
