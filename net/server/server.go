@@ -2,8 +2,8 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/opinionated/scraper-core/net"
+	"github.com/opinionated/utils/log"
 	"io/ioutil"
 	"net/http"
 )
@@ -37,7 +37,7 @@ func (s *ScrapeServer) Handle() func(rw http.ResponseWriter, request *http.Reque
 		} else if method == "POST" {
 			s.postHandle(rw, request)
 		} else {
-			fmt.Println("oh nose, unexpected HTTP method:", method)
+			log.Warn("oh nose, unexpected HTTP method:", method)
 			rw.WriteHeader(405)
 		}
 	}

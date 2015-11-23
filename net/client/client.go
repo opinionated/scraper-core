@@ -3,8 +3,8 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/opinionated/scraper-core/net"
+	"github.com/opinionated/utils/log"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -28,22 +28,22 @@ func (c *Client) Run() {
 		// go get the article
 		req, err := Get()
 		if err != nil {
-			panic(err)
+			log.Error(err)
 		}
 
 		// don't reply to empty requests
 		if netScraper.IsEmptyRequest(req) {
-			fmt.Println("got empty request")
+			log.Info("got empty request")
 			continue
 		}
 
-		fmt.Println("client got article with url:", req.URL)
+		log.Info("got article", req.URL)
 
 		result := netScraper.Response{URL: req.URL, Data: "", Error: netScraper.ResponseOk}
 
 		err = Post(result)
 		if err != nil {
-			panic(err)
+			log.Error(err)
 		}
 
 	}
@@ -61,8 +61,7 @@ func Get() (netScraper.Request, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		fmt.Println("oh nose, did not get OK status:", resp.StatusCode)
-		panic("bad status code")
+		log.Error("oh nose, did not get OK status:", resp.StatusCode)
 	}
 
 	js, err := ioutil.ReadAll(resp.Body)

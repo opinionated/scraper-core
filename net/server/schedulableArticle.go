@@ -1,9 +1,9 @@
 package server
 
 import (
-	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/scraper"
+	"github.com/opinionated/utils/log"
 	"math"
 	"time"
 )
@@ -39,20 +39,31 @@ func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 	// check if the task ran while we were waiting
 	select {
 	case result := <-task.ran:
-		fmt.Println("top result for article:", task.article.GetLink(), "is:", toString(result))
-
-		return
+		if result == ARTICLE_OK {
+			log.Info("scraped article:", task.article.GetLink())
+			return
+		}
+		if result == ARTICLE_BAD {
+			log.Warn("bad result for article:", task.article.GetLink(), "requeueing")
+		}
 	default:
-
+		// nothing read
 	}
 
-	fmt.Println("adding article:", task.article.GetLink())
 	task.j.AddArticle(task.article, task.ran)
 
 	// wait for the article to go off to a client
 	res := <-task.ran
 	if res == ARTICLE_OK {
-		fmt.Println("article", task.article.GetLink(), "OK from res")
+		log.Info("scraped article", task.article.GetLink())
+		return
+	}
+	if res == ARTICLE_BAD {
+		log.Warn("bad result for article:", task.article.GetLink(), "requeueing")
+		// re-queue
+		task.start = time.Now()
+		task.delay = 2 // set delay to 2 here b/c prev delay was relative
+		scheduler.Add(task)
 		return
 	}
 
@@ -62,19 +73,19 @@ func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 
 	select {
 	case result := <-task.ran:
-		fmt.Println("article:", task.article.GetLink(), "is:", toString(result))
-		if result != ARTICLE_BAD {
+		if result == ARTICLE_OK {
+			log.Info("scraped article", task.article.GetLink())
 			return // finish this
 		}
+
+		log.Warn("got result", toString(result), "for article", task.article.GetLink(), "requeueing")
 		// else fall through to requeue
 
 	case <-time.After(waitTime * time.Second):
 		// fall through to requeue
+		log.Info("timing out for article", task.article.GetLink())
 	}
 
-	fmt.Println("requeueing:", task.article.GetLink())
-
-	// re-queue
 	task.start = time.Now()
 	task.delay = 2 // set delay to 2 here b/c prev delay was relative
 	scheduler.Add(task)
