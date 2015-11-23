@@ -1,10 +1,10 @@
 package server
 
 import (
-	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/net"
 	"github.com/opinionated/scraper-core/scraper"
+	"github.com/opinionated/utils/log"
 	"sync"
 )
 
@@ -76,7 +76,7 @@ func (j *Jefe) HandleResponse(response netScraper.Response) error {
 	j.mutex.Lock()
 	defer j.mutex.Unlock()
 
-	fmt.Println("response:", response)
+	log.Info("handling response:", response)
 
 	_, isOpen := j.openRequests[response.URL]
 	if isOpen && response.Error == netScraper.ResponseOk {
@@ -87,7 +87,6 @@ func (j *Jefe) HandleResponse(response netScraper.Response) error {
 		delete(j.openRequests, response.URL)
 
 	} else if isOpen {
-		fmt.Println("response for article")
 		// tell the article schedulable that is needs to re-add
 		// don't remove it from the openRequests in case the article
 		// comes back before it gets added again
@@ -115,6 +114,7 @@ func (j *Jefe) NextArticle() (scraper.Article, bool) {
 		next := j.pop()
 		if _, ok := j.openRequests[next.GetLink()]; ok {
 			j.updateStatus(next.GetLink(), ARTICLE_SENT)
+			log.Info("going to send article", next.GetLink())
 			return next, true
 		}
 	}
@@ -127,6 +127,7 @@ func (j *Jefe) NextArticle() (scraper.Article, bool) {
 // schedulable article
 func (j *Jefe) AddArticle(article scraper.Article, c chan int) {
 	j.mutex.Lock()
+	log.Info("adding article", article.GetLink(), "to ready queue")
 	j.queue = append(j.queue, article)
 	j.openRequests[article.GetLink()] = c
 	j.mutex.Unlock()
@@ -160,6 +161,6 @@ func (j Jefe) updateStatus(name string, status int) {
 
 	default:
 		// this is a big issue because the signal chan should not be blocking
-		panic("could not send status")
+		log.Error("could not send status for article", name)
 	}
 }

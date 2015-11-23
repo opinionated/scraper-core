@@ -1,9 +1,9 @@
 package server
 
 import (
-	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/scraper"
+	"github.com/opinionated/utils/log"
 	"math"
 	"time"
 )
@@ -20,7 +20,11 @@ func (task *SchedulableRSS) Run(scheduler *scheduler.Scheduler) {
 
 	err := scraper.UpdateRSS(task.rss)
 	if err != nil {
-		fmt.Println("error getting stories")
+		log.Error("error updating rss stories:", err)
+		// requeue
+		task.start = time.Now()
+		task.rss.GetChannel().ClearArticles()
+		go scheduler.Add(task)
 		return
 	}
 

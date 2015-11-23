@@ -1,12 +1,10 @@
 package netScraper_test
 
 import (
-	"fmt"
-	//	"github.com/opinionated/scraper-core/net"
 	"github.com/opinionated/scraper-core/net/client"
 	"github.com/opinionated/scraper-core/net/server"
 	"github.com/opinionated/scraper-core/scraper"
-	//	"net/http"
+	"github.com/opinionated/utils/log"
 	"testing"
 	"time"
 )
@@ -30,12 +28,14 @@ func doFullServer() *server.Jefe {
 }
 
 func TestIntegrationA(t *testing.T) {
-	j := doFullServer()
+	log.InitStd()
 
+	j := doFullServer()
 	c := client.Client{}
 	go c.Run()
 	time.Sleep(time.Duration(100) * time.Second)
 
-	fmt.Println("going to stop j")
+	log.InitStd()
+	log.Info("going to stop j")
 	j.Stop()
 }

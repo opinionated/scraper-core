@@ -1,16 +1,24 @@
 package netScraper_test
 
 import (
-	"bytes"
+	"flag"
 	"fmt"
 	"github.com/opinionated/scraper-core/net"
 	"github.com/opinionated/scraper-core/net/client"
 	"github.com/opinionated/scraper-core/net/server"
 	"github.com/opinionated/scraper-core/scraper"
+	"github.com/opinionated/utils/log"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 )
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	log.InitStd()
+	os.Exit(m.Run())
+}
 
 //
 // NOTE: run tests one at a time until we have graceful server shutdown
@@ -18,33 +26,6 @@ import (
 // the timings here or somewhere else.
 //
 //
-
-// can use testClient to test validity, but not effect. Think about
-// expanding it to be more robust if we need to write more tests
-type testClient struct {
-	found map[string]bool
-}
-
-func (t testClient) checkAll() (string, bool) {
-	var buffer bytes.Buffer
-	for key, value := range t.found {
-		if !value {
-			buffer.WriteString("did not receive expected target:", key, "\n")
-		}
-	}
-	return buffer.String()
-}
-
-func (t testClient) add(url string) {
-	t.found[url] = true
-}
-
-func newTC(expected []string) testClient {
-	t := testClient{make(map[string]bool)}
-	for _, e := range expected {
-		t.found[e] = false
-	}
-}
 
 // start the servr on local:8080
 func StartServer(s *server.ScrapeServer) {
