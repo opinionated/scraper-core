@@ -30,6 +30,7 @@ func (c *Client) Run() {
 		req, err := Get(c.IP)
 		if err != nil {
 			log.Error(err)
+			continue // go around to the next iteration
 		}
 
 		// don't reply to empty requests
