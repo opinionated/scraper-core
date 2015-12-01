@@ -14,6 +14,7 @@ import (
 // TODO: scraping logic
 
 type Client struct {
+	IP string
 }
 
 // Run runs the client in an infinite loop
@@ -26,9 +27,10 @@ func (c *Client) Run() {
 		<-ticker.C
 
 		// go get the article
-		req, err := Get()
+		req, err := Get(c.IP)
 		if err != nil {
 			log.Error(err)
+			continue // go around to the next iteration
 		}
 
 		// don't reply to empty requests
@@ -41,7 +43,7 @@ func (c *Client) Run() {
 
 		result := netScraper.Response{URL: req.URL, Data: "", Error: netScraper.ResponseOk}
 
-		err = Post(result)
+		err = Post(c.IP, result)
 		if err != nil {
 			log.Error(err)
 		}
@@ -50,15 +52,16 @@ func (c *Client) Run() {
 }
 
 // Get the server for an article to scrape.
-func Get() (netScraper.Request, error) {
+func Get(target string) (netScraper.Request, error) {
 	c := &http.Client{}
 
 	// get next work unit
-	resp, err := c.Get("http://localhost:8080/")
-	defer resp.Body.Close()
+	resp, err := c.Get(target)
+
 	if err != nil {
 		return netScraper.EmptyRequest(), err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
 		log.Error("oh nose, did not get OK status:", resp.StatusCode)
@@ -76,7 +79,7 @@ func Get() (netScraper.Request, error) {
 }
 
 // Post posts a completed work item up to the server.
-func Post(done netScraper.Response) error {
+func Post(target string, done netScraper.Response) error {
 
 	c := &http.Client{}
 
@@ -87,7 +90,7 @@ func Post(done netScraper.Response) error {
 	}
 
 	req, err := http.NewRequest("POST",
-		"http://localhost:8080/",
+		target,
 		bytes.NewReader(fetchedJSON))
 
 	if err != nil {

@@ -80,13 +80,13 @@ func TestServerSimple(t *testing.T) {
 	for _, expected := range expectedUrls {
 
 		fmt.Println("client fetching")
-		request, err := client.Get()
+		request, err := client.Get("http://localhost:8080")
 		PanicErr(err)
 		if request.URL != expected {
 			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
 		}
 
-		empty, err := client.Get()
+		empty, err := client.Get("http://localhost:8080")
 		PanicErr(err)
 		if !netScraper.IsEmptyRequest(empty) {
 			t.Errorf("expected empty request, got:", empty.URL)
@@ -94,7 +94,7 @@ func TestServerSimple(t *testing.T) {
 
 		if request.URL != "" {
 			response := netScraper.Response{URL: request.URL, Data: "data", Error: netScraper.ResponseOk}
-			client.Post(response)
+			client.Post("http://localhost:8080", response)
 		}
 
 		time.Sleep(time.Duration(4) * time.Second)
@@ -110,7 +110,7 @@ func TestServerSingleLatePreRerun(t *testing.T) {
 	expectedUrls := []string{"one", "two", "three"}
 	for _, expected := range expectedUrls {
 
-		request, err := client.Get()
+		request, err := client.Get("http://localhost:8080")
 		PanicErr(err)
 		if request.URL != expected {
 			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
@@ -123,7 +123,7 @@ func TestServerSingleLatePreRerun(t *testing.T) {
 				seenTwo = true
 				time.Sleep(time.Duration(3) * time.Second)
 			}
-			client.Post(response)
+			client.Post("http://localhost:8080", response)
 		}
 
 		time.Sleep(time.Duration(4) * time.Second)
@@ -139,7 +139,7 @@ func TestServerSingleLatePostRerun(t *testing.T) {
 	expectedUrls := []string{"one", "two", "three"}
 	for _, expected := range expectedUrls {
 
-		request, err := client.Get()
+		request, err := client.Get("http://localhost:8080")
 		PanicErr(err)
 		if request.URL != expected {
 			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
@@ -152,7 +152,7 @@ func TestServerSingleLatePostRerun(t *testing.T) {
 				seenTwo = true
 				time.Sleep(time.Duration(6) * time.Second)
 			}
-			client.Post(response)
+			client.Post("http://localhost:8080", response)
 		}
 
 		time.Sleep(time.Duration(4) * time.Second)
@@ -169,7 +169,7 @@ func TestServerMultiLatePostRerun(t *testing.T) {
 	i := 0
 	for _, expected := range expectedUrls {
 
-		request, err := client.Get()
+		request, err := client.Get("http://localhost:8080")
 		PanicErr(err)
 		if request.URL != expected {
 			t.Errorf("expected: %s recieved: %s\n", request.URL, expected)
@@ -182,10 +182,10 @@ func TestServerMultiLatePostRerun(t *testing.T) {
 				seenTwo = true
 				go func() {
 					time.Sleep(time.Duration(12) * time.Second)
-					client.Post(response)
+					client.Post("http://localhost:8080", response)
 				}()
 			} else {
-				client.Post(response)
+				client.Post("http://localhost:8080", response)
 			}
 
 		}
@@ -208,7 +208,7 @@ func TestServerBad(t *testing.T) {
 	expectedUrls := []string{"one", "two", "three", "two"}
 	for _, expected := range expectedUrls {
 
-		request, err := client.Get()
+		request, err := client.Get("http://localhost:8080")
 		PanicErr(err)
 		if request.URL != expected {
 			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
@@ -221,7 +221,7 @@ func TestServerBad(t *testing.T) {
 				seenTwo = true
 				response.Error = netScraper.ResponseBad
 			}
-			client.Post(response)
+			client.Post("http://localhost:8080", response)
 		}
 
 		time.Sleep(time.Duration(4) * time.Second)
@@ -238,7 +238,7 @@ func TestServerDrop(t *testing.T) {
 	expectedUrls := []string{"one", "two", "three", "two"}
 	for _, expected := range expectedUrls {
 
-		request, err := client.Get()
+		request, err := client.Get("http://localhost:8080")
 		PanicErr(err)
 		if request.URL != expected {
 			t.Errorf("expected:", expected, "recieved:", request.URL, "\n")
@@ -251,7 +251,7 @@ func TestServerDrop(t *testing.T) {
 				seenTwo = true
 				// don't send
 			} else {
-				_ = client.Post(response)
+				_ = client.Post("http://localhost:8080", response)
 			}
 		}
 
