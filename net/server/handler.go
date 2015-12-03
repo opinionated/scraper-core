@@ -27,7 +27,7 @@ func storeArticle(article scraper.Article) error {
 	// take all spaces out of title
 	// TODO: think about cleaning this up a little more
 	fileName := strings.Replace(article.GetTitle(), " ", "", -1)
-	path := "collected/" + fileName + ".json"
+	path := "opinionatedData/" + fileName + ".json"
 
 	err = ioutil.WriteFile(path, jsonStr, 0644)
 	if err != nil {

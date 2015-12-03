@@ -50,7 +50,7 @@ func (c *Client) Run() {
 		}
 
 		if len(article.GetData()) == 0 {
-			log.Warning("bad article body for url:", req.URL)
+			log.Warn("bad article body for url:", req.URL)
 		}
 		// send article back up
 		result := netScraper.Response{URL: req.URL, Data: article.Data, Error: netScraper.ResponseOk}
