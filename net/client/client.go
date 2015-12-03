@@ -49,6 +49,9 @@ func (c *Client) Run() {
 			log.Error("could not scrape article", req.URL, ":", err)
 		}
 
+		if len(article.GetData()) == 0 {
+			log.Warning("bad article body for url:", req.URL)
+		}
 		// send article back up
 		result := netScraper.Response{URL: req.URL, Data: article.Data, Error: netScraper.ResponseOk}
 		err = Post(c.IP, result)

@@ -88,6 +88,7 @@ func (j *Jefe) HandleResponse(response netScraper.Response) error {
 	if isOpen && response.Error == netScraper.ResponseOk {
 
 		// pass this article off
+		// TODO: put in some error checking on the article body
 		article := j.openArticles[response.URL]
 		article.SetData(response.Data)
 		go handleScrapedArticle(article)
