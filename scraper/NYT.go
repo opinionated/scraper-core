@@ -114,7 +114,7 @@ type NYTRSS struct {
 	// TODO: actually set string to the value of the link
 }
 
-func (rss *NYTRSS) GetLink() string { return "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" }
+func (rss *NYTRSS) GetLink() string { return "http://topics.nytimes.com/top/opinion/editorialsandoped/editorials/index.html?rss=1" }
 
 func (rss *NYTRSS) GetChannel() RSSChannel {
 	// return a pointer to the channel, interfaces implicitly have ptrs if they are there
