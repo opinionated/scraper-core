@@ -44,7 +44,7 @@ func (c *Client) Run() {
 		// for now only use the NYT
 		article := scraper.NYTArticle{}
 		article.Link = req.URL
-		err = scraper.ScrapeArticle(article)
+		err = scraper.ScrapeArticle(&article)
 		if err != nil {
 			log.Error("could not scrape article", req.URL, ":", err)
 		}
