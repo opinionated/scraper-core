@@ -2,6 +2,7 @@ package scraper_test
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"github.com/opinionated/scraper-core/scraper"
 	"golang.org/x/net/html"
@@ -12,6 +13,20 @@ import (
 // TODO: make a compare function
 func TestNYT1(t *testing.T) {
 	err := CompareBodies("testData/NYTPutinHTML.txt", "testData/NYTPutinBody.txt", &scraper.NYTArticle{})
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+}
+
+func TestNYT2(t *testing.T) {
+	err := CompareBodies("testData/bankruptISISHTML.txt", "testData/bankruptISISBody.txt", &scraper.NYTArticle{})
+	if err != nil {
+		t.Errorf("%s", err)
+	}
+}
+
+func TestNYT3(t *testing.T) {
+	err := CompareBodies("testData/sustainGreenGrowthHTML.txt", "testData/sustainGreenGrowthBody.txt", &scraper.NYTArticle{})
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -53,9 +68,40 @@ func CompareBodies(HTMLarticle string, ExpectedArticle string, article scraper.A
 	for CompareFile.Scan() {
 		fullText += CompareFile.Text()
 	}
+
+	diffd := WriteDiff(article.GetData(), fullText)
 	if fullText != article.GetData() {
-		return fmt.Errorf("Expected: \n%s\n Received: \n%s\n", fullText, article.GetData())
+
+		return fmt.Errorf("diff: \n%s\nExpected: \n%s\n Received: \n%s\n\n",
+			diffd, fullText, article.GetData())
+
 	}
 
 	return nil
+}
+
+func WriteDiff(got, expected string) string {
+	var builder bytes.Buffer
+	open := false
+	offset := 0
+	for i, r := range got {
+		if i-offset >= len(expected) {
+			return builder.String()
+		}
+		if got[i] != expected[i-offset] {
+			offset++
+			if !open {
+				builder.WriteString("[")
+				open = true
+			}
+		} else if open {
+			// if got == expected && open
+			builder.WriteString("]")
+			open = false
+		}
+
+		builder.WriteRune(r)
+	}
+
+	return builder.String()
 }
