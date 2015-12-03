@@ -91,11 +91,11 @@ func ScrapeArticle(article Article) error {
 
 	//send http request
 	resp, err := client.Do(req)
-	defer resp.Body.Close()
 	if err != nil {
 		fmt.Println("error sending article request")
 		return err
 	}
+	defer resp.Body.Close()
 
 	// TODO: check resp.Header to see if X-Article-Template is [full]
 
@@ -113,9 +113,10 @@ func ScrapeArticle(article Article) error {
 func buildArticleHeader(req *http.Request) error {
 	req.Header.Add("Referer", "https://www.google.com") //required to get past paywall
 
-	req.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")                   //extra?
+	req.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8") //extra?
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36")
 	req.Header.Add("Accept-Language", "en-US,en;q=0.5")                                                           //extra?
-	req.Header.Add("Host", "www.wsj.com")                                                                         //extra?
+	req.Header.Add("Host", "www.nytimes.com")                                                                     //extra?
 	req.Header.Add("Cookie", "DJSESSION=country%3Dus%7C%7Ccontinent%3Dna%7C%7Cregion%3Dny%7C%7Ccity%3Dpoundtown") //messin with cookies
 	return nil
 }
