@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// ScrapeServer handles routing
+// ScrapeServer handles routing. The Jefe manages an article work queue.
 type ScrapeServer struct {
 	j Jefe
 }

@@ -8,17 +8,16 @@ import (
 	"sync"
 )
 
-// the only behavior this should have in these and other cases is that all articles eventualy get
-// scraped (possibly multiple times), but are stored exactly once per article
-
-// Jefe interfaces a scheduler and a task server. It sort of manages a
-// state machine for each article. Clients ask the Jefe for articles to
-// scrape via http GET. If an article is ready for scraping the Jefe sends
-// it to the client. The client tries to scrape the article, then sends the
-// results back to the Jefe via http POST. The Jefe automatically requeues
-// the article if it doesn't get scraped in a reasonable amount oftime.
-//
-// The Jefe also manages the scheduler, which in turn manages rss pings.
+// Jefe manages scraping articles. The server should add any RSS feeds that need
+// scraping to the Jefe when it starts. SchedulableRSS feeds schedule article
+// tasks with the Jefe's scheduler. SchedulableArticle 'manages' the article,
+// from adding it to the jefe's work queue to the article being successfully
+// scraped. The schedulableArticle puts the article back into the work queue if
+// the article does not come back in a reasonable ammount of time or comes back
+// with an error. Once the article has been successfully scraped, the Jefe
+// passes it off to be analyzed.
+// The server treats the Jefe as a queue of articles, and the Jefe is unaware of
+// the server implementation.
 type Jefe struct {
 	// manage RSS pings, manage adds
 	s *scheduler.Scheduler
@@ -30,6 +29,8 @@ type Jefe struct {
 	// if the article is not scraped in a reasonable amount of time then
 	// the article schedulable will automatically re-queue the article
 	openRequests map[string]chan int
+	// holds open articles
+	openArticles map[string]scraper.Article
 
 	// control read/write to the queue
 	mutex *sync.Mutex
@@ -37,7 +38,10 @@ type Jefe struct {
 
 // NewJefe creates a new Jefe with an unstarted scheduler.
 func NewJefe() Jefe {
-	return Jefe{s: scheduler.MakeScheduler(5, 5), openRequests: make(map[string]chan int), mutex: &sync.Mutex{}}
+	return Jefe{s: scheduler.MakeScheduler(5, 5),
+		openRequests: make(map[string]chan int),
+		openArticles: make(map[string]scraper.Article),
+		mutex:        &sync.Mutex{}}
 }
 
 // Start the scheduler.
@@ -51,8 +55,10 @@ func (j *Jefe) Stop() {
 
 	j.mutex.Lock()
 	// close all the open requests
-	for _, c := range j.openRequests {
+	for url, c := range j.openRequests {
 		close(c)
+		delete(j.openRequests, url)
+		delete(j.openArticles, url)
 	}
 
 	j.mutex.Unlock()
@@ -80,41 +86,48 @@ func (j *Jefe) HandleResponse(response netScraper.Response) error {
 
 	_, isOpen := j.openRequests[response.URL]
 	if isOpen && response.Error == netScraper.ResponseOk {
+
+		// pass this article off
+		article := j.openArticles[response.URL]
+		article.SetData(response.Data)
+		go handleScrapedArticle(article)
+
 		// got a good response
 		j.updateStatus(response.URL, ARTICLE_OK)
 
+		// close everything up
 		close(j.openRequests[response.URL])
 		delete(j.openRequests, response.URL)
+		delete(j.openArticles, response.URL)
 
 	} else if isOpen {
 		// tell the article schedulable that is needs to re-add
 		// don't remove it from the openRequests in case the article
 		// comes back before it gets added again
 		j.updateStatus(response.URL, ARTICLE_BAD)
-
-	} else {
-		// got an article that has already been taken care
-
 	}
+	// else a response has already come back, fall through
 
 	return nil
 }
 
-// NextArticle returns the next article to scrape. If there
-// is an article to scrape, it returns the article and true,
-// else it returns nil and false. Indicates that the article
-// has been sent when it returns an article (ie article needs
-// to be sent right away).
+// NextArticle returns the next article to scrape. If there is an article to
+// scrape, it returns the article and true, else it returns nil and false. Tells
+// the schedulableArticle that the article has been sent
 func (j *Jefe) NextArticle() (scraper.Article, bool) {
 	j.mutex.Lock()
 	defer j.mutex.Unlock()
 
+	// look for the next article that has an open requests (the jefe may recieve
+	// an article after it has been requeued)
 	for j.hasNext() {
-		// TODO: I think this may still need testing
+
 		next := j.pop()
 		if _, ok := j.openRequests[next.GetLink()]; ok {
+
 			j.updateStatus(next.GetLink(), ARTICLE_SENT)
 			log.Info("going to send article", next.GetLink())
+
 			return next, true
 		}
 	}
@@ -122,15 +135,18 @@ func (j *Jefe) NextArticle() (scraper.Article, bool) {
 	return nil, false
 }
 
-// AddArticle adds an article to the ready queue. The article will be scraped by a
-// client then sent back up to the Jefe. The chan signals back to the
+// AddArticle adds an article to the ready queue. The article will be scraped by
+// a client then sent back up to the Jefe. The chan signals back to the
 // schedulable article
 func (j *Jefe) AddArticle(article scraper.Article, c chan int) {
 	j.mutex.Lock()
+	defer j.mutex.Unlock()
+
 	log.Info("adding article", article.GetLink(), "to ready queue")
 	j.queue = append(j.queue, article)
+
 	j.openRequests[article.GetLink()] = c
-	j.mutex.Unlock()
+	j.openArticles[article.GetLink()] = article
 }
 
 // removes an article from the ready queue
