@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-// NYT new source types
+// ECON new source types
 
-type NYTArticle struct {
+type ECONArticle struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
 	Description string `xml:"description"`
@@ -19,16 +19,18 @@ type NYTArticle struct {
 }
 
 // TODO: add errors
-func (article NYTArticle) GetLink() string        { return article.Link }
-func (article NYTArticle) GetDescription() string { return article.Description }
-func (article NYTArticle) GetTitle() string       { return article.Title }
-func (article NYTArticle) GetData() string        { return article.Data }
+func (article ECONArticle) GetLink() string        { return article.Link }
+func (article ECONArticle) GetDescription() string { return article.Description }
+func (article ECONArticle) GetTitle() string       { return article.Title }
+func (article ECONArticle) GetData() string        { return article.Data }
 
 // use ptrs for the next two because we want the article changed
-func (article *NYTArticle) SetData(data string) { article.Data = data }
+func (article *ECONArticle) SetData(data string) { article.Data = data }
 
-func (article *NYTArticle) DoParse(parser *html.Tokenizer) error {
+func (article *ECONArticle) DoParse(parser *html.Tokenizer) error {
 
+
+// ENDS WITH div class content clearfix everywhere
 articleOpeningTagLoop:
 	for {
 		token := parser.Next()
@@ -42,7 +44,7 @@ articleOpeningTagLoop:
 			isStartArticle := tmp.Data == "p"
 			if isStartArticle {
 				for _, attr := range tmp.Attr {
-					if attr.Key == "class" && attr.Val == "story-body-text story-content" {
+					if attr.Key == "class" && attr.Val == "main-content" {
 						fmt.Println("Found it, bitch")
 						break articleOpeningTagLoop
 					}
@@ -89,12 +91,12 @@ articleClosingTagLoop:
 	return nil
 }
 
-type NYTRSSChannel struct {
+type ECONRSSChannel struct {
 	XMLName  xml.Name     `xml:"channel"`
-	Articles []NYTArticle `xml:"item"`
+	Articles []ECONArticle `xml:"item"`
 }
 
-func (channel *NYTRSSChannel) GetArticle(slot int) Article {
+func (channel *ECONRSSChannel) GetArticle(slot int) Article {
 	if slot >= channel.GetNumArticles() {
 		// Check that the request doesn't go out of bounds
 		// TODO: errors
@@ -103,31 +105,31 @@ func (channel *NYTRSSChannel) GetArticle(slot int) Article {
 	return &channel.Articles[slot]
 }
 
-func (channel *NYTRSSChannel) GetNumArticles() int {
+func (channel *ECONRSSChannel) GetNumArticles() int {
 	return len(channel.Articles)
 }
 
-type NYTRSS struct {
+type ECONRSS struct {
 	XMLName xml.Name      `xml:"rss"`
-	Channel NYTRSSChannel `xml:"channel"`
+	Channel ECONRSSChannel `xml:"channel"`
 	RSSLink string
 	// TODO: actually set string to the value of the link
 }
 
-func (rss *NYTRSS) GetLink() string { return "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" }
+func (rss *ECONRSS) GetLink() string { return "http://rss.ECONimes.com/services/xml/rss/ECON/HomePage.xml" }
 
-func (rss *NYTRSS) GetChannel() RSSChannel {
+func (rss *ECONRSS) GetChannel() RSSChannel {
 	// return a pointer to the channel, interfaces implicitly have ptrs if they are there
 	tmp := &rss.Channel
 	return tmp
 }
 
-func (channel *NYTRSSChannel) ClearArticles() bool {
+func (channel *ECONRSSChannel) ClearArticles() bool {
 	channel.Articles = nil
 	return true
 }
 
 // make sure all the structs implement the interfaces
-var _ RSS = (*NYTRSS)(nil)
-var _ RSSChannel = (*NYTRSSChannel)(nil)
-var _ Article = (*NYTArticle)(nil)
+var _ RSS = (*ECONRSS)(nil)
+var _ RSSChannel = (*ECONRSSChannel)(nil)
+var _ Article = (*ECONArticle)(nil)
