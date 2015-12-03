@@ -3,25 +3,26 @@ package scraper
 
 import (
 	"fmt"
-	"strings"
+	"net/http"           //http.Cookie, http.Get
+	"net/http/cookiejar" //CookieJar
+	"net/url"            //url.URL
 	"strconv"
+	"strings"
 	"time"
-	"net/http"				//http.Cookie, http.Get
-	"net/http/cookiejar"	//CookieJar
-	"net/url"				//url.URL
 )
 
 //cookies for sneeaky sneaking
 //TODO: add identifiers for cookie jars?
 type CookieJar struct {
-	jar			*cookiejar.Jar
+	jar *cookiejar.Jar
 }
 
 //Member functions
 //get cookies
-func (jar *CookieJar) GetCookies(u *url.URL) ([]*http.Cookie) {
+func (jar *CookieJar) Cookies(u *url.URL) []*http.Cookie {
 	return jar.jar.Cookies(u)
 }
+
 //set cookies
 func (jar *CookieJar) SetCookies(u *url.URL, i_cookies []*http.Cookie) {
 	jar.jar.SetCookies(u, i_cookies)
@@ -33,6 +34,7 @@ func (jar *CookieJar) SetCookiesFromHeader(u *url.URL, h http.Header) {
 func (jar *CookieJar) Yo() {
 	fmt.Println("I exist!")
 }
+
 //jar factory
 func NewCookieJar() *CookieJar {
 	fmt.Println("making jar")

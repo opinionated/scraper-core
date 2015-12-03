@@ -58,8 +58,8 @@ func UpdateRSS(rss RSS) error {
 		fmt.Println("error getting RSS:", err)
 		return err
 	}
-
 	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("error reading body")
@@ -79,7 +79,8 @@ func UpdateRSS(rss RSS) error {
 // ScrapeArticle fetches and parses the article.
 // article should be provided as a *Article.
 func ScrapeArticle(article Article) error {
-	client := &http.Client{}
+	cookies := NewCookieJar()
+	client := &http.Client{Jar: cookies}
 
 	// build request
 	req, err := http.NewRequest("GET", article.GetLink(), nil) //create http request

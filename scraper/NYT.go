@@ -70,6 +70,14 @@ articleClosingTagLoop:
 					}
 				}
 			}
+
+			// is a link
+			if tmp.Data == "a" {
+				parser.Next()
+				tmp = parser.Token()
+				newBody := article.GetData() + tmp.Data
+				article.SetData(newBody)
+			}
 			isInParagraph = true
 		default:
 			if !isInParagraph {
@@ -114,7 +122,9 @@ type NYTRSS struct {
 	// TODO: actually set string to the value of the link
 }
 
-func (rss *NYTRSS) GetLink() string { return "http://topics.nytimes.com/top/opinion/editorialsandoped/editorials/index.html?rss=1" }
+func (rss *NYTRSS) GetLink() string {
+	return "http://topics.nytimes.com/top/opinion/editorialsandoped/editorials/index.html?rss=1"
+}
 
 func (rss *NYTRSS) GetChannel() RSSChannel {
 	// return a pointer to the channel, interfaces implicitly have ptrs if they are there
