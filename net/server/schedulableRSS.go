@@ -1,27 +1,30 @@
-package fetcher
+package server
 
 import (
-	"fmt"
 	"github.com/opinionated/scheduler/scheduler"
 	"github.com/opinionated/scraper-core/scraper"
+	"github.com/opinionated/utils/log"
 	"math"
 	"time"
 )
 
-// make an RSS schedulable
 type SchedulableRSS struct {
 	rss         scraper.RSS
 	delay       int
 	start       time.Time
 	oldArticles map[string]bool
+	j           *Jefe
 }
 
 func (task *SchedulableRSS) Run(scheduler *scheduler.Scheduler) {
-	fmt.Println("goint to run RSS")
 
 	err := scraper.UpdateRSS(task.rss)
 	if err != nil {
-		fmt.Println("error getting stories")
+		log.Error("error updating rss stories:", err)
+		// requeue
+		task.start = time.Now()
+		task.rss.GetChannel().ClearArticles()
+		go scheduler.Add(task)
 		return
 	}
 
@@ -32,12 +35,13 @@ func (task *SchedulableRSS) Run(scheduler *scheduler.Scheduler) {
 
 	// schedule any new articles
 	// an article is new if it wasn't in the last RSS ping
-	delay := 10 // TODO: create legitimate task delays
+	delay := 5 // TODO: create legitimate task delays
 	for i := 0; i < task.rss.GetChannel().GetNumArticles(); i++ {
 		article := task.rss.GetChannel().GetArticle(i)
+
 		if _, inOld := task.oldArticles[article.GetLink()]; !inOld {
-			toSchedule := CreateSchedulableArticle(article, delay)
-			delay += 10
+			toSchedule := CreateSchedulableArticle(article, delay, task.j)
+			delay += 5
 			go scheduler.Add(toSchedule)
 		}
 
@@ -78,8 +82,8 @@ func (task *SchedulableRSS) SetTimeRemaining(remaining int) {
 }
 
 // factory to make schedulable task
-func CreateSchedulableRSS(task scraper.RSS, delay int) *SchedulableRSS {
-	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool)}
+func CreateSchedulableRSS(task scraper.RSS, delay int, j *Jefe) *SchedulableRSS {
+	return &SchedulableRSS{task, delay, time.Now(), make(map[string]bool), j}
 }
 
 // check that we implemented this properly

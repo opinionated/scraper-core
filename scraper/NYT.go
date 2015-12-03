@@ -46,12 +46,12 @@ articleOpeningTagLoop:
 						fmt.Println("Found it, bitch")
 						break articleOpeningTagLoop
 					}
-				}				
+				}
 			}
 		}
 	}
 
-isInParagraph := true
+	isInParagraph := true
 articleClosingTagLoop:
 	for {
 		token := parser.Next()
@@ -68,21 +68,21 @@ articleClosingTagLoop:
 						fmt.Println("Hit end")
 						break articleClosingTagLoop
 					}
-				}	
+				}
 			}
-			isInParagraph = true			
+			isInParagraph = true
 		default:
 			if !isInParagraph {
 				continue
 			}
-				tmp := parser.Token()
+			tmp := parser.Token()
 
-				newBody := article.GetData()
-				// add a space on the left just in case there is a comment or something
-				newBody = newBody + strings.TrimSpace(tmp.Data)
-				article.SetData(newBody)
-				isInParagraph = false
-				//fmt.Println("Next p", newBody)
+			newBody := article.GetData()
+			// add a space on the left just in case there is a comment or something
+			newBody = newBody + strings.TrimSpace(tmp.Data)
+			article.SetData(newBody)
+			isInParagraph = false
+			//fmt.Println("Next p", newBody)
 		}
 	}
 	fmt.Println(article.GetData())

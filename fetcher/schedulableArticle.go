@@ -15,7 +15,7 @@ type SchedulableArticle struct {
 	start   time.Time
 }
 
-func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
+func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 	fmt.Println("goint to get task")
 	err := scraper.ScrapeArticle(task.Article)
 	if err != nil {
@@ -25,7 +25,7 @@ func (task *SchedulableArticle) DoWork(scheduler *scheduler.Scheduler) {
 	fmt.Println("task body is:", task.Article.GetData())
 }
 
-func (task *SchedulableArticle) GetTimeRemaining() int {
+func (task *SchedulableArticle) TimeRemaining() int {
 	remainingTime := float64(task.delay) - time.Since(task.start).Seconds()
 	if remainingTime <= 0 {
 		return 0

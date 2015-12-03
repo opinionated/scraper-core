@@ -2,29 +2,27 @@ package scraper_test
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/opinionated/scraper-core/scraper"
 	"golang.org/x/net/html"
 	"os"
 	"testing"
-	"fmt"
 )
-
 
 // TODO: make a compare function
 func TestNYT1(t *testing.T) {
 	err := CompareBodies("testData/NYTPutinHTML.txt", "testData/NYTPutinBody.txt", &scraper.NYTArticle{})
 	if err != nil {
-		t.Errorf("%s",err)
+		t.Errorf("%s", err)
 	}
 }
 
 func TestCompareBodies(t *testing.T) {
 	err := CompareBodies("testData/NYTPutinHTML.txt", "testData/NYTPutinHTML.txt", &scraper.NYTArticle{})
 	if err != nil {
-		t.Errorf("%s",err)
+		t.Errorf("%s", err)
 	}
 }
-
 
 // CompareBodies will take two strings, one HTML path and one path to a
 // pre-parsed file and compare the two using the parse method from article.
