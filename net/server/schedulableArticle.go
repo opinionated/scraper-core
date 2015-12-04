@@ -62,14 +62,14 @@ func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 		log.Warn("bad result for article:", task.article.GetLink(), "requeueing")
 		// re-queue
 		task.start = time.Now()
-		task.delay = 2 // set delay to 2 here b/c prev delay was relative
+		task.delay = 15 // set delay to 2 here b/c prev delay was relative
 		scheduler.Add(task)
 		return
 	}
 
 	// once the article is at the client, wait a reasonable amount of time
 	// if the article did not come back in the expected time, requeue it
-	var waitTime time.Duration = 2
+	var waitTime time.Duration = 15
 
 	select {
 	case result := <-task.ran:
@@ -87,7 +87,7 @@ func (task *SchedulableArticle) Run(scheduler *scheduler.Scheduler) {
 	}
 
 	task.start = time.Now()
-	task.delay = 2 // set delay to 2 here b/c prev delay was relative
+	task.delay = 15 // set delay to 2 here b/c prev delay was relative
 	scheduler.Add(task)
 }
 

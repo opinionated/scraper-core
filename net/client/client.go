@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/opinionated/scraper-core/net"
+	"github.com/opinionated/scraper-core/scraper"
 	"github.com/opinionated/utils/log"
 	"io/ioutil"
 	"net/http"
@@ -38,16 +39,26 @@ func (c *Client) Run() {
 			log.Info("got empty request")
 			continue
 		}
-
 		log.Info("got article", req.URL)
 
-		result := netScraper.Response{URL: req.URL, Data: "", Error: netScraper.ResponseOk}
-
-		err = Post(c.IP, result)
+		// for now only use the NYT
+		article := scraper.NYTArticle{}
+		article.Link = req.URL
+		err = scraper.ScrapeArticle(&article)
 		if err != nil {
-			log.Error(err)
+			log.Error("could not scrape article", req.URL, ":", err)
 		}
 
+		if len(article.GetData()) == 0 {
+			log.Warn("bad article body for url:", req.URL)
+		}
+		// send article back up
+		result := netScraper.Response{URL: req.URL, Data: article.Data, Error: netScraper.ResponseOk}
+		err = Post(c.IP, result)
+		if err != nil {
+			// TODO: handle bad connection requests (eg RPI wifi being terrible)
+			log.Error(err)
+		}
 	}
 }
 
@@ -100,10 +111,10 @@ func Post(target string, done netScraper.Response) error {
 	req.Header.Set("content-type", "application/json")
 
 	postResp, err := c.Do(req)
-	defer postResp.Body.Close()
 	if err != nil {
 		return err
 	}
+	defer postResp.Body.Close()
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"golang.org/x/net/html"
 	"strings"
+	"unicode"
 )
 
 // NYT new source types
@@ -70,7 +71,33 @@ articleClosingTagLoop:
 					}
 				}
 			}
-			isInParagraph = true
+
+			if tmp.Data == "p" {
+				isInParagraph = true
+				continue
+			}
+
+			// is a link
+			if tmp.Data == "a" {
+				fmt.Println("hit start of link")
+				parser.Next()
+				tmp = parser.Token()
+				newBody := strings.TrimSpace(article.GetData()) + " " + strings.TrimSpace(tmp.Data) + " "
+				article.SetData(newBody)
+				isInParagraph = true
+			}
+
+		case token == html.EndTagToken:
+			tmp := parser.Token()
+			if tmp.Data == "p" {
+				fmt.Println("hit end of paragraph:", article.GetData())
+				isInParagraph = false
+			}
+
+			if tmp.Data == "article" {
+				break articleClosingTagLoop
+			}
+
 		default:
 			if !isInParagraph {
 				continue
@@ -79,6 +106,9 @@ articleClosingTagLoop:
 
 			newBody := article.GetData()
 			// add a space on the left just in case there is a comment or something
+			if unicode.IsPunct(rune(tmp.Data[0])) {
+				newBody = strings.TrimSpace(newBody)
+			}
 			newBody = newBody + strings.TrimSpace(tmp.Data)
 			article.SetData(newBody)
 			isInParagraph = false
@@ -114,7 +144,9 @@ type NYTRSS struct {
 	// TODO: actually set string to the value of the link
 }
 
-func (rss *NYTRSS) GetLink() string { return "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" }
+func (rss *NYTRSS) GetLink() string {
+	return "http://topics.nytimes.com/top/opinion/editorialsandoped/editorials/index.html?rss=1"
+}
 
 func (rss *NYTRSS) GetChannel() RSSChannel {
 	// return a pointer to the channel, interfaces implicitly have ptrs if they are there
