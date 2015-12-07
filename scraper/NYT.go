@@ -3,6 +3,7 @@ package scraper
 import (
 	"encoding/xml"
 	"fmt"
+	"github.com/opinionated/utils/log"
 	"golang.org/x/net/html"
 	"strings"
 	"unicode"
@@ -36,7 +37,7 @@ articleOpeningTagLoop:
 
 		switch {
 		case token == html.ErrorToken:
-			fmt.Println("Prollem")
+			log.Warn("Prollem moving NYT article", article.GetTitle(), "to open tag")
 			return nil
 		case token == html.StartTagToken:
 			tmp := parser.Token()
@@ -44,7 +45,6 @@ articleOpeningTagLoop:
 			if isStartArticle {
 				for _, attr := range tmp.Attr {
 					if attr.Key == "class" && attr.Val == "story-body-text story-content" {
-						fmt.Println("Found it, bitch")
 						break articleOpeningTagLoop
 					}
 				}
@@ -58,7 +58,7 @@ articleClosingTagLoop:
 		token := parser.Next()
 		switch {
 		case token == html.ErrorToken:
-			fmt.Println("Prollem")
+			log.Warn("Prollem scraping NYT article", article.GetTitle())
 			return nil
 		case token == html.StartTagToken:
 			tmp := parser.Token()
@@ -66,7 +66,6 @@ articleClosingTagLoop:
 			if isEndArticle {
 				for _, attr := range tmp.Attr {
 					if attr.Key == "class" && attr.Val == "story-footer story-content" {
-						fmt.Println("Hit end")
 						break articleClosingTagLoop
 					}
 				}
@@ -79,7 +78,6 @@ articleClosingTagLoop:
 
 			// is a link
 			if tmp.Data == "a" {
-				fmt.Println("hit start of link")
 				parser.Next()
 				tmp = parser.Token()
 				newBody := strings.TrimSpace(article.GetData()) + " " + strings.TrimSpace(tmp.Data) + " "
@@ -90,7 +88,6 @@ articleClosingTagLoop:
 		case token == html.EndTagToken:
 			tmp := parser.Token()
 			if tmp.Data == "p" {
-				fmt.Println("hit end of paragraph:", article.GetData())
 				isInParagraph = false
 			}
 
