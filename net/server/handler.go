@@ -11,6 +11,9 @@ import (
 // handles scraped articles
 // TODO: think about where this should be
 func handleScrapedArticle(article scraper.Article) {
+	if err := scraper.CheckFile(article.GetData()); err != nil {
+		log.Warn("when checking article", article.GetTitle(), "got err:", err)
+	}
 	if err := storeArticle(article); err != nil {
 		log.Error("failed to write article", article.GetTitle(), ":", err)
 		return

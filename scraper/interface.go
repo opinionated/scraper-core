@@ -2,7 +2,7 @@ package scraper
 
 import (
 	"encoding/xml"
-	"fmt"
+	"github.com/opinionated/utils/log"
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"net/http"
@@ -55,21 +55,21 @@ func UpdateRSS(rss RSS) error {
 	resp, err := http.Get(rss.GetLink())
 	if err != nil {
 		// TODO: error checking here
-		fmt.Println("error getting RSS:", err)
+		log.Error("error getting RSS:", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("error reading body")
+		log.Error("error reading RSS body:", err)
 		// TODO: error handling
 		return err
 	}
 
 	err = xml.Unmarshal(body, rss)
 	if err != nil {
-		fmt.Println("could not build RSS obj from rss request")
+		log.Error("could not build RSS obj from rss request:", err)
 		return err
 	}
 
@@ -86,14 +86,14 @@ func ScrapeArticle(article Article) error {
 	req, err := http.NewRequest("GET", article.GetLink(), nil) //create http request
 	err = buildArticleHeader(req)
 	if err != nil {
-		fmt.Println("could not build article request")
+		log.Error("could not build article request:", err)
 		return err
 	}
 
 	//send http request
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("error sending article request")
+		log.Error("error sending article request:", err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -104,7 +104,7 @@ func ScrapeArticle(article Article) error {
 	parser := html.NewTokenizer(resp.Body)
 	err = article.DoParse(parser) //parse the html body
 	if err != nil {
-		fmt.Println("error building article request")
+		log.Error("error building article request:", err)
 		return err
 	}
 	return nil
