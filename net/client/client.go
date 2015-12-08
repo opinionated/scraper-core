@@ -15,12 +15,15 @@ import (
 // TODO: scraping logic
 
 type Client struct {
-	IP string
+	IP        string
+	ignoreBad map[string]struct{}
 }
 
 // Run runs the client in an infinite loop
 func (c *Client) Run() {
 	ticker := time.NewTicker(time.Duration(10) * time.Second)
+	c.ignoreBad = make(map[string]struct{})
+	defer c.printBad()
 
 	for {
 
@@ -39,26 +42,47 @@ func (c *Client) Run() {
 			log.Info("got empty request")
 			continue
 		}
+		if _, contains := c.ignoreBad[req.URL]; contains {
+			log.Warn("got bad article:", req.URL)
+			continue
+		}
+
 		log.Info("got article", req.URL)
 
 		// for now only use the NYT
 		article := scraper.NYTArticle{}
 		article.Link = req.URL
+
 		err = scraper.ScrapeArticle(&article)
 		if err != nil {
+			c.ignoreBad[req.URL] = struct{}{} // add to ignore
 			log.Error("could not scrape article", req.URL, ":", err)
+			continue
 		}
 
 		if len(article.GetData()) == 0 {
-			log.Warn("bad article body for url:", req.URL)
+			c.ignoreBad[req.URL] = struct{}{} // add to ignore
+			log.Error("bad article body for url:", req.URL)
+			continue
 		}
+
 		// send article back up
 		result := netScraper.Response{URL: req.URL, Data: article.Data, Error: netScraper.ResponseOk}
 		err = Post(c.IP, result)
 		if err != nil {
-			// TODO: handle bad connection requests (eg RPI wifi being terrible)
-			log.Error(err)
+			time.Sleep(time.Duration(10) * time.Second) // sleep incase the WIFI is just down
+
+			err = Post(c.IP, result)
+			if err != nil {
+				log.Error(err)
+			}
 		}
+	}
+}
+
+func (c Client) printBad() {
+	for key, _ := range c.ignoreBad {
+		log.Warn("ignored article:", key)
 	}
 }
 

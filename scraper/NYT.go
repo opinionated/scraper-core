@@ -3,7 +3,6 @@ package scraper
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/opinionated/utils/log"
 	"golang.org/x/net/html"
 	"strings"
 	"unicode"
@@ -37,8 +36,7 @@ articleOpeningTagLoop:
 
 		switch {
 		case token == html.ErrorToken:
-			log.Warn("Prollem moving NYT article", article.GetTitle(), "to open tag")
-			return nil
+			return fmt.Errorf("problem moving article %s to open tag", article.GetTitle())
 		case token == html.StartTagToken:
 			tmp := parser.Token()
 			isStartArticle := tmp.Data == "p"
@@ -58,8 +56,7 @@ articleClosingTagLoop:
 		token := parser.Next()
 		switch {
 		case token == html.ErrorToken:
-			log.Warn("Prollem scraping NYT article", article.GetTitle())
-			return nil
+			return fmt.Errorf("problem scraping article %s", article.GetTitle())
 		case token == html.StartTagToken:
 			tmp := parser.Token()
 			isEndArticle := tmp.Data == "footer"
@@ -72,12 +69,29 @@ articleClosingTagLoop:
 			}
 
 			if tmp.Data == "p" {
-				isInParagraph = true
-				continue
+				for _, attr := range tmp.Attr {
+					if attr.Key == "class" && strings.Contains(attr.Val, "story-body-text") {
+						isInParagraph = true
+					}
+				}
+				if isInParagraph {
+					continue
+				}
 			}
 
 			// is a link
 			if tmp.Data == "a" {
+				shouldSkip := false
+				for _, attr := range tmp.Attr {
+					if attr.Key == "class" && strings.Contains(attr.Val, "visually-hidden") {
+						shouldSkip = true
+					}
+				}
+
+				if shouldSkip {
+					continue
+				}
+
 				parser.Next()
 				tmp = parser.Token()
 				newBody := strings.TrimSpace(article.GetData()) + " " + strings.TrimSpace(tmp.Data) + " "
@@ -89,10 +103,6 @@ articleClosingTagLoop:
 			tmp := parser.Token()
 			if tmp.Data == "p" {
 				isInParagraph = false
-			}
-
-			if tmp.Data == "article" {
-				break articleClosingTagLoop
 			}
 
 		default:
@@ -109,7 +119,6 @@ articleClosingTagLoop:
 			newBody = newBody + strings.TrimSpace(tmp.Data)
 			article.SetData(newBody)
 			isInParagraph = false
-			//fmt.Println("Next p", newBody)
 		}
 	}
 	fmt.Println(article.GetData())
