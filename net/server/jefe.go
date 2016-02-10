@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/opinionated/scheduler/scheduler"
+	"github.com/opinionated/scheduler"
 	"github.com/opinionated/scraper-core/net"
 	"github.com/opinionated/scraper-core/scraper"
 	"github.com/opinionated/utils/log"
